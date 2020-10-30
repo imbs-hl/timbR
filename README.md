@@ -23,15 +23,6 @@ library(devtools)
 devtools::install_github("imbs-hl/timbR")
 ```
 
-### Usage
-#### R version
-For usage of the R version see ?ranger in R. Most importantly, see the Examples section. As a first example you could try 
-
-```R  
-ranger(Species ~ ., data = iris)
-```
-
-
 If you find any bugs, or if you experience any crashes, please report to us.
 
 Please cite our paper if you use ranger.
