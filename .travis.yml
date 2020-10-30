@@ -1,0 +1,18 @@
+language: r
+cache: packages
+warnings_are_errors: true
+r:
+  - oldrel
+  - release
+  - devel
+  
+r_github_packages:
+  - r-lib/covr
+
+after_success:
+  - Rscript -e 'covr::coveralls()'
+
+notifications:
+  email: b.laabs@uni-luebeck.de
+    on_success: change
+    on_failure: change
