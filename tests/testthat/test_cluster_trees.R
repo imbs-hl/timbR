@@ -2,6 +2,7 @@
 library(timbR)
 library(ranger)
 library(testthat)
+library(mlr)
 
 ## train initial random forest on iris
 rf <- ranger(Species ~ ., data = iris, num.trees = 10, keep.inbag = TRUE)
@@ -36,7 +37,7 @@ test_that("Test input", {
   # defined k
   expect_silent(cluster_trees(rf = rf, num.clusters = num_clusters, distance.matrix = dist))
   # auto detection of k
-  expect_silent(cluster_trees(rf = rf, num.clusters = "AUTO", distance.matrix = dist))
+  expect_message(cluster_trees(rf = rf, num.clusters = "AUTO", distance.matrix = dist))
 })
 
 ## test output

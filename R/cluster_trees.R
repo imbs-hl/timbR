@@ -15,6 +15,9 @@
 #' @examples
 #' require(ranger)
 #' require(timbR)
+#' require(mlr)
+#' require(clue)
+#' require(clusterSim)
 #'
 #' ## Train random forest with ranger
 #' rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 500)
@@ -25,9 +28,11 @@
 #' ## Cluster trees in two clusters
 #' clustered_trees <- cluster_trees(rf = rg.iris, num.clusters = 2, distance.matrix = distances)
 #'
+#' ## Auto cluster trees in clusters
+#' clustered_trees <- cluster_trees(rf = rg.iris, num.clusters = "AUTO", distance.matrix = distances)
+#'
 #' ## Plot clustered trees colored by cluster in principal component space
 #' plot(clustered_trees$PC1, clustered_trees$PC2, col = clustered_trees$cluster)
-#'
 #'
 cluster_trees <- function(rf, num.clusters = NULL, distance.matrix = NULL){
 
@@ -47,7 +52,7 @@ cluster_trees <- function(rf, num.clusters = NULL, distance.matrix = NULL){
   if(sum(dim(distance.matrix) == rf$num.trees) != 2){
     stop("Dimensions of distance matrix do not fit to ranger object.")
   }
-  if(num.clusters > rf$num.trees){
+  if(num.clusters > rf$num.trees & num.clusters != "AUTO"){
     stop("You can not select more clusters than trees in the ranger object.")
   }
 
@@ -55,7 +60,24 @@ cluster_trees <- function(rf, num.clusters = NULL, distance.matrix = NULL){
   pca <- prcomp(distance.matrix, rank = 2)
 
 if(num.clusters == "AUTO"){
+  cluster.task = makeClusterTask(data = as.data.frame(pca$rotation))
 
+  ps = makeParamSet(
+    makeNumericParam("centers", lower = 1, upper = floor(sqrt(rf$num.trees)))
+  )
+
+  ctrl = makeTuneControlGrid(resolution = floor(sqrt(rf$num.trees)))
+
+  rdesc = makeResampleDesc("CV", iters = 5L)
+
+  res = tuneParams("cluster.kmeans",
+                   task = cluster.task,
+                   resampling = rdesc,
+                   par.set = ps,
+                   control = ctrl)
+
+
+  clusters <- kmeans(x = pca$rotation, centers = res$x$centers)
 } else {
   clusters <- kmeans(x = pca$rotation, centers = num.clusters)
 }

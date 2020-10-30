@@ -23,6 +23,7 @@ forest trained with \code{ranger} to idetify clusters of similar trees.
 \examples{
 require(ranger)
 require(timbR)
+require(mlr)
 
 ## Train random forest with ranger
 rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 500)
@@ -33,9 +34,11 @@ distances <- measure_distances(rf = rg.iris, metric = "weighted splitting variab
 ## Cluster trees in two clusters
 clustered_trees <- cluster_trees(rf = rg.iris, num.clusters = 2, distance.matrix = distances)
 
+## Auto cluster trees in clusters
+clustered_trees <- cluster_trees(rf = rg.iris, num.clusters = "AUTO", distance.matrix = distances)
+
 ## Plot clustered trees colored by cluster in principal component space
 plot(clustered_trees$PC1, clustered_trees$PC2, col = clustered_trees$cluster)
-
 
 }
 \author{
