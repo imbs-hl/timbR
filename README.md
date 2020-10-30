@@ -1,7 +1,6 @@
 [![Travis Build Status](https://travis-ci.org/imbs-hl/timbR.svg?branch=master)](https://travis-ci.org/github/imbs-hl/timbR)
-<!---[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/imbs-hl/ranger?branch=master&svg=true)](https://ci.appveyor.com/project/mnwright/ranger)
-[![Coverage Status](https://coveralls.io/repos/github/imbs-hl/ranger/badge.svg?branch=master)](https://coveralls.io/github/imbs-hl/ranger?branch=master)
-![CRAN Downloads month](http://cranlogs.r-pkg.org/badges/ranger?color=brightgreen)
+[![Coverage Status](https://coveralls.io/repos/github/imbs-hl/timbR/badge.svg?branch=master)](https://coveralls.io/github/imbs-hl/timbR?branch=master)
+<!---![CRAN Downloads month](http://cranlogs.r-pkg.org/badges/ranger?color=brightgreen)
 ![CRAN Downloads overall](http://cranlogs.r-pkg.org/badges/grand-total/ranger?color=brightgreen) --->
 ## timbR: Tree interpretation methods based on ranger
 Björn-Hergen Laabs
