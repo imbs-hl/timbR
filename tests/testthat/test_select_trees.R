@@ -9,7 +9,7 @@ rf <- ranger(Species ~ ., data = iris, num.trees = 10, keep.inbag = TRUE)
 ## define correct input variables
 metric    <- "weighted splitting variables"
 dist <- measure_distances(rf = rf, metric = metric)
-cluster <- cluster_trees(rf = rf, num.clusters = 2, distance.matrix = dist())
+cluster <- cluster_trees(rf = rf, num.clusters = 2, distance.matrix = dist)
 num_trees <- 2
 
 expect_silent(select_trees(rf = rf, num.trees = num_trees, distance.matrix = dist))
