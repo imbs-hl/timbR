@@ -4,7 +4,7 @@
 \alias{select_trees}
 \title{Select most representative trees of a random forest}
 \usage{
-select_trees(rf, num.trees = NULL, distance.matrix = NULL)
+select_trees(rf, num.trees = NULL, distance.matrix = NULL, clustering = NULL)
 }
 \arguments{
 \item{rf}{Object of class \code{ranger} used with \code{write.forest = TRUE} to select trees from.}
@@ -12,6 +12,8 @@ select_trees(rf, num.trees = NULL, distance.matrix = NULL)
 \item{num.trees}{Number of trees to be selected from \code{rf}.}
 
 \item{distance.matrix}{Add matrix of precalculated distances.}
+
+\item{clustering}{(Optional) Add results of tree clustering}
 }
 \value{
 \item{\code{rep.trees}}{\code{ranger} object containing the most representative trees}
@@ -29,11 +31,14 @@ require(timbR)
 rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
 
 ## Calculate pair-wise distances for all trees
-distances <- measure_distances(rf = rg.iris, metric = "splitting variables")
+distances <- measure_distances(rf = rg.iris, metric = "weighted splitting variables")
 
 ## Select 5 most representative trees
 rg.iris.rep <- select_trees(rf = rg.iris, num.trees = 5, distance.matrix = distances)
 
+## Select 5 most representative trees based on clustering
+clustering <- cluster_trees(rf = rg.iris, num.clusters = 2, distance.matrix = distances)
+rg.iris.rep <- select_trees(rf = rg.iris, num.trees = 2, distance.matrix = distances, clustering = clustering)
 
 }
 \author{
