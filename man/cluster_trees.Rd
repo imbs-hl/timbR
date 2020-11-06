@@ -24,6 +24,8 @@ forest trained with \code{ranger} to idetify clusters of similar trees.
 require(ranger)
 require(timbR)
 require(mlr)
+require(clue)
+require(clusterSim)
 
 ## Train random forest with ranger
 rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 500)
