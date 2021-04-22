@@ -50,7 +50,8 @@ test_that("Test input", {
 
 ## test output
 test_that("Test output", {
-  expect_equal(class(rf_rep), "ranger")
-  expect_equal(rf_rep$num.trees, num_trees)
-  expect_equal(length(rf_rep$inbag.counts), num_trees)
+  expect_equal(length(rf_rep), 2)
+  expect_equal(class(rf_rep[[1]]), "ranger")
+  expect_equal(rf_rep[[1]]$num.trees, num_trees)
+  expect_equal(length(rf_rep[[1]]$inbag.counts), num_trees)
 })

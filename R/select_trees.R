@@ -102,6 +102,8 @@ select_trees <- function(rf, num.trees = NULL, distance.matrix = NULL, clusterin
                                                     decreasing   = FALSE,
                                                     index.return = TRUE)[[2]][1]
                             }
+
+                            cluster_trees[rep_trees_idx]
                           })
 
   ## Unlist tree indices
@@ -123,5 +125,7 @@ select_trees <- function(rf, num.trees = NULL, distance.matrix = NULL, clusterin
   rf_rep$prediction.error <- NULL
 
   ## Return reduced ranger object
-  return(rf_rep)
+  res <- list(rf = rf_rep,
+              rep_tree_ids = rep_trees_idx)
+  return(res)
 }

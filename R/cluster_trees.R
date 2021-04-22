@@ -57,7 +57,7 @@ cluster_trees <- function(rf, num.clusters = NULL, distance.matrix = NULL){
   }
 
 ## Calculate principal component analysis
-  pca <- prcomp(distance.matrix, rank = 2)
+  pca <- prcomp(distance.matrix, rank = 3)
 
 if(num.clusters == "AUTO"){
   cluster.task = makeClusterTask(data = as.data.frame(pca$rotation))
@@ -82,7 +82,7 @@ if(num.clusters == "AUTO"){
   clusters <- kmeans(x = pca$rotation, centers = num.clusters)
 }
 
-output <- data.frame(cbind(pca$rotation, clusters$cluster))
+output <- data.frame(cbind(pca$rotation[,1:2], clusters$cluster))
 names(output) <- c("PC1", "PC2", "cluster")
 return(output)
 }
