@@ -63,9 +63,6 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
   ## Prepare matrix for output ----
   distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
 
-  ## Extract outcome id
-  outcome_id <- rf$forest$dependent.varID
-
   ## Extract number of features
   num_features <- rf$num.independent.variables
 
@@ -74,7 +71,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     ## Simplify for each tree which features were used
     feature_usage <- lapply(X      = rf$forest$split.varIDs,
                             FUN    = function(x){
-                              split_vars_T1 <- 1:num_features %in% sort(unique(x[x != outcome_id]))
+                              split_vars_T1 <- 1:num_features %in% sort(unique(x[x != 0]))
                              })
 
     ## Calculate standardized pair-wise distances
