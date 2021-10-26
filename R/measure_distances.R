@@ -143,26 +143,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     distances <- matrix(data = 0, nrow = rf$num.trees, ncol = rf$num.trees)
 
     ## Initialize matrix for terminal nodes
-    term_node <- matrix(data = NA, nrow = nrow(test_data), ncol = rf$num.trees)
-
-    for (i in 1:nrow(test_data)){
-      obs <- test_data[i,]
-      for (j in 1:rf$num.trees){
-        treeInfo <- treeInfo(rf, j)
-
-        node <- 0
-
-        while (is.na(treeInfo$prediction[treeInfo$nodeID == node])) {
-          if (as.numeric(as.character(dplyr::select(obs, treeInfo$splitvarName[treeInfo$nodeID == node]))) <= treeInfo$splitval[treeInfo$nodeID == node]){
-            node <- treeInfo$leftChild[treeInfo$nodeID == node]
-          } else {
-            node <- treeInfo$rightChild[treeInfo$nodeID == node]
-          }
-        }
-
-        term_node[i,j] <- node
-      }
-    }
+    term_node <- predict(rf, data = test_data, type = "terminalNodes")$predictions
 
     ## Calculate if observations end in same terminal node for each tree
     I <- list()
