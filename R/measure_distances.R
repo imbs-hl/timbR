@@ -63,21 +63,27 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
   ## Prepare matrix for output ----
   distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
 
+  ## Extract outcome id
+  outcome_id <- rf$forest$dependent.varID
+
   ## Extract number of features
   num_features <- rf$num.independent.variables
 
   ## Calculation for d0 of Banerjee et al. (2012) ----
   if (metric == "splitting variables"){
     ## Simplify for each tree which features were used
-    feature_usage <- lapply(X      = rf$forest$split.varIDs,
+    feature_usage <- lapply(X      = 1:rf$num.trees,
                             FUN    = function(x){
-                              split_vars_T1 <- 1:num_features %in% sort(unique(x[x != 0]))
+                              splitting_variables <- sort(unique(treeInfo(rf, x)$splitvarID))
+                              fu <- rep(0, num_features)
+                              fu[(splitting_variables+1)] <- 1
+                              fu
                              })
 
     ## Calculate standardized pair-wise distances
     for (i in 1:rf$num.trees){
       for (j in 1:rf$num.trees){
-        distances[i,j] <- sum(feature_usage[[i]] != feature_usage[[j]])/num_features
+        distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
       }
     }
   }
@@ -117,6 +123,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     })
 
     US <- do.call("rbind", US)
+
 
   distance <- lapply(1:rf$num.trees, function(x){
                 distance <- lapply(1:rf$num.trees, function(y){
