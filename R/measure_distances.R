@@ -63,27 +63,36 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
   ## Prepare matrix for output ----
   distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
 
+  ## Extract outcome id
+  outcome_id <- rf$forest$dependent.varID
+
   ## Extract number of features
   num_features <- rf$num.independent.variables
 
   ## Calculation for d0 of Banerjee et al. (2012) ----
   if (metric == "splitting variables"){
     ## Simplify for each tree which features were used
-    feature_usage <- lapply(X      = rf$forest$split.varIDs,
+    feature_usage <- lapply(X      = 1:rf$num.trees,
                             FUN    = function(x){
-                              split_vars_T1 <- 1:num_features %in% sort(unique(x[x != 0]))
+                              splitting_variables <- sort(unique(treeInfo(rf, x)$splitvarID))
+                              fu <- rep(0, num_features)
+                              fu[(splitting_variables+1)] <- 1
+                              fu
                              })
 
     ## Calculate standardized pair-wise distances
     for (i in 1:rf$num.trees){
       for (j in 1:rf$num.trees){
-        distances[i,j] <- sum(feature_usage[[i]] != feature_usage[[j]])/num_features
+        distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
       }
     }
   }
 
   ## Calculation weighted version of d0 ----
   if (metric == "weighted splitting variables"){
+    ## Get all possible split points from rf
+    splitpoints <-extract_splitinfo(rf)
+
     ## Calculate usage score for each variable
     US <- lapply(1:rf$num.trees, function(i){
       ## initialize levels for ith tree
@@ -92,8 +101,10 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
       ## Extract child node IDs for ith tree
       child.nodeIDs <- rf$forest$child.nodeIDs[[i]]
 
-      ## Extract split var IDs for ith tree
-      split.varIDs <- rf$forest$split.varIDs[[i]]
+      ## Extract split points from ith tree
+
+      tree <- treeInfo(rf, i)
+      split_points_i <- paste(tree$splitvarName, tree$splitval, sep = "_")
 
       ## Child nodes get level of parent node + 1 ----
       for (j in 1:length(rf$forest$split.varIDs[[i]])){
@@ -106,17 +117,22 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
         }
       }
 
-      ## Usage score for each variable
-      US <- rep(0, rf$num.independent.variables)
+      ## Exclude leaves
+      split_level    <- split_level[-which(split_points_i =="NA_NA")]
+      split_points_i <- split_points_i[-which(split_points_i =="NA_NA")]
 
-      US <- lapply(1:rf$num.independent.variables, function(j){
-        sum(1/(2^(split_level[split.varIDs == j] - 1))) / (max(split_level) - 1)
+      ## Usage score for each variable
+      US <- rep(0, length(splitpoints))
+
+      US <- lapply(1:length(splitpoints), function(j){
+        sum(1/(2^(split_level[split_points_i == splitpoints[j]] - 1))) / (max(split_level) - 1)
       })
 
       as.numeric(do.call("cbind", US))
     })
 
     US <- do.call("rbind", US)
+
 
   distance <- lapply(1:rf$num.trees, function(x){
                 distance <- lapply(1:rf$num.trees, function(y){
