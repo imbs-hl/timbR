@@ -42,7 +42,7 @@ select_trees <- function(rf, num.trees = NULL, distance.matrix = NULL){
   if(!checkmate::testDouble(num.trees) | !checkmate::testCount(num.trees)){
     stop("num.trees has to be a single numerical value.")
   }
-  if(checkmate::testNull(num.trees)){
+  if(checkmate::testNull(distance.matrix)){
     stop("Specify precalculated pair-wise distances.")
   }
   if(sum(dim(distance.matrix) == rf$num.trees) != 2){

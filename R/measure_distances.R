@@ -72,15 +72,18 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
   ## Calculation for d0 of Banerjee et al. (2012) ----
   if (metric == "splitting variables"){
     ## Simplify for each tree which features were used
-    feature_usage <- lapply(X      = rf$forest$split.varIDs,
+    feature_usage <- lapply(X      = 1:rf$num.trees,
                             FUN    = function(x){
-                              split_vars_T1 <- 1:num_features %in% sort(unique(x[x != outcome_id]))
+                              splitting_variables <- sort(unique(treeInfo(rf, x)$splitvarID))
+                              fu <- rep(0, num_features)
+                              fu[(splitting_variables+1)] <- 1
+                              fu
                              })
 
     ## Calculate standardized pair-wise distances
     for (i in 1:rf$num.trees){
       for (j in 1:rf$num.trees){
-        distances[i,j] <- sum(feature_usage[[i]] != feature_usage[[j]])/num_features
+        distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
       }
     }
   }
@@ -121,6 +124,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
 
     US <- do.call("rbind", US)
 
+
   distance <- lapply(1:rf$num.trees, function(x){
                 distance <- lapply(1:rf$num.trees, function(y){
                               #1/rf$num.independent.variables * sum((US[x,] - US[y,])^2)
@@ -139,26 +143,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     distances <- matrix(data = 0, nrow = rf$num.trees, ncol = rf$num.trees)
 
     ## Initialize matrix for terminal nodes
-    term_node <- matrix(data = NA, nrow = nrow(test_data), ncol = rf$num.trees)
-
-    for (i in 1:nrow(test_data)){
-      obs <- test_data[i,]
-      for (j in 1:rf$num.trees){
-        treeInfo <- treeInfo(rf, j)
-
-        node <- 0
-
-        while (is.na(treeInfo$prediction[treeInfo$nodeID == node])) {
-          if (as.numeric(as.character(dplyr::select(obs, treeInfo$splitvarName[treeInfo$nodeID == node]))) <= treeInfo$splitval[treeInfo$nodeID == node]){
-            node <- treeInfo$leftChild[treeInfo$nodeID == node]
-          } else {
-            node <- treeInfo$rightChild[treeInfo$nodeID == node]
-          }
-        }
-
-        term_node[i,j] <- node
-      }
-    }
+    term_node <- predict(rf, data = test_data, type = "terminalNodes")$predictions
 
     ## Calculate if observations end in same terminal node for each tree
     I <- list()
