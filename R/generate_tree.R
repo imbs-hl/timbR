@@ -13,7 +13,7 @@
 #' @author Bjoern-Hergen Laabs, M.Sc.
 #' @return
 #'   \item{\code{rep.trees}}{\code{ranger} object containing the artificial most representative tree}
-#' @export select_trees
+#' @export generate_tree
 #'
 #' @examples
 #' require(ranger)
