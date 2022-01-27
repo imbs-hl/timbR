@@ -174,6 +174,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     ## Calculate mean distances for all possible split points
     mean_distances <- lapply(possible_rf_rep, function(X){
       dist <- suppressMessages(mean(measure_distances(X, metric, test_data)[rf_rep$num.trees]))
+      return(dist)
     })
     mean_distances <- unlist(mean_distances)
 
@@ -186,7 +187,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
         return(sum(pred != true)/length(pred))
       } else if(rf_rep$treetype == "Regression"){
         true <- as.numeric(train_data[,names(train_data) == dependent_varname])
-        return((pred - true)^2/length(pred))
+        return(sum((pred - true)^2)/length(pred))
       }
     })
     pred_error <- unlist(pred_error)
