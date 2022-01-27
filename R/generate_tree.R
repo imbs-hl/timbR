@@ -180,11 +180,12 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     ## Estimate prediction accuracy for all possible split points
     pred_error <- lapply(possible_rf_rep, function(X){
       pred <- predict(X, train_data, predict.all = TRUE)$predictions[,X$num.trees]
-      true <- as.character(train_data[,names(train_data) == dependent_varname])
       if(rf_rep$treetype == "Classification"){
+        true <- as.character(train_data[,names(train_data) == dependent_varname])
         pred <- rf$forest$levels[pred]
         return(sum(pred != true)/length(pred))
       } else if(rf_rep$treetype == "Regression"){
+        true <- as.numeric(train_data[,names(train_data) == dependent_varname])
         return((pred - true)^2/length(pred))
       }
     })
