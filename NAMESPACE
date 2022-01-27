@@ -2,6 +2,7 @@
 
 export(measure_distances)
 export(select_trees)
+export(generate_tree)
 import(checkmate)
 import(dplyr)
 import(ranger)
