@@ -193,31 +193,33 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     pred_error <- unlist(pred_error)
 
     ## Select optimal tree
-    min_dist_trees <- which(mean_distances == min(mean_distances, na.rm = TRUE))
-    opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees]))
-    opt_idx  <- min_dist_trees[opt_tree][1]
+    if(min(mean_distances, na.rm = TRUE) < Inf){
+      min_dist_trees <- which(mean_distances == min(mean_distances, na.rm = TRUE))
+      opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees]))
+      opt_idx  <- min_dist_trees[opt_tree][1]
 
-    if(mean_distances[opt_idx] < min_dist | (mean_distances[opt_idx] == min_dist & pred_error[opt_idx] < min_pred_error)){
-      ## Set new rf_rep
-      rf_rep <- possible_rf_rep[[opt_idx]]
+      if(mean_distances[opt_idx] <= min_dist){
+        ## Set new rf_rep
+        rf_rep <- possible_rf_rep[[opt_idx]]
 
-      ## Set possible new split_points
-      used_split_point <- split_points[[node]][opt_idx,]
-      split_points[[max_node + 2]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val < used_split_point$split_val,]
-      split_points[[max_node + 3]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val > used_split_point$split_val,]
+        ## Set possible new split_points
+        used_split_point <- split_points[[node]][opt_idx,]
+        split_points[[max_node + 2]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val < used_split_point$split_val,]
+        split_points[[max_node + 3]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val > used_split_point$split_val,]
 
-      ## Set train_data
-      node_data_left <- node_data[[node]]
-      node_data_left <- node_data_left[node_data_left[,names(node_data_left) == used_split_point$split_var] <= used_split_point$split_val,]
+        ## Set train_data
+        node_data_left <- node_data[[node]]
+        node_data_left <- node_data_left[node_data_left[,names(node_data_left) == used_split_point$split_var] <= used_split_point$split_val,]
 
-      node_data_right <- node_data[[node]]
-      node_data_right <- node_data_right[node_data_right[,names(node_data_right) == used_split_point$split_var] > used_split_point$split_val,]
+        node_data_right <- node_data[[node]]
+        node_data_right <- node_data_right[node_data_right[,names(node_data_right) == used_split_point$split_var] > used_split_point$split_val,]
 
-      node_data[[max_node + 2]] <- node_data_left
-      node_data[[max_node + 3]] <- node_data_right
+        node_data[[max_node + 2]] <- node_data_left
+        node_data[[max_node + 3]] <- node_data_right
 
-      min_dist <- mean_distances[opt_idx]
-      min_pred_error <- pred_error[opt_idx]
+        min_dist <- mean_distances[opt_idx]
+        min_pred_error <- pred_error[opt_idx]
+      }
     }
 
     node <- node +1
