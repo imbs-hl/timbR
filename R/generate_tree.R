@@ -163,7 +163,6 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
   }
 
   while(node <= max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]])) + 1){
-
     max_node <- max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]]))
 
     ## Generate trees for all possible split points
@@ -198,7 +197,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
       opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees]))
       opt_idx  <- min_dist_trees[opt_tree][1]
 
-      if(mean_distances[opt_idx] <= min_dist){
+      if(mean_distances[opt_idx] < 0.95*min_dist){
         ## Set new rf_rep
         rf_rep <- possible_rf_rep[[opt_idx]]
 
