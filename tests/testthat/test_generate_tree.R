@@ -4,8 +4,8 @@ library(ranger)
 library(testthat)
 
 ## Prepare inputs
-rf <- ranger(Species ~ ., data = iris, num.trees = 10)
-rf2 <- ranger(Species ~ ., data = iris, num.trees = 10, write.forest = FALSE)
+rf <- ranger(Species ~ ., data = iris, num.trees = 10, importance = "permutation")
+rf2 <- ranger(Species ~ ., data = iris, num.trees = 10, write.forest = FALSE, importance = "impurity_corrected")
 rf_rep <- generate_tree(rf = rf, train_data = iris)
 
 ## Test correct input ----

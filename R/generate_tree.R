@@ -8,6 +8,8 @@
 #' @param metric          Specification of the tree metric. Available are "splitting variables",
 #'                        "weighted splitting variables", "terminal nodes" and "prediction".
 #' @param train_data      Data set for training of artificial representative tree
+#' @param importance.mode If TRUE variable importance measures will be used to prioritize next split in tree generation.
+#'                        Imporves speed. Variable importance values have to be included in ranger object.
 #' @param ...             Further paramters passed on to measure_distances (e.g. test_data)
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
@@ -20,12 +22,12 @@
 #' require(timbR)
 #'
 #' ## Train random forest with ranger
-#' rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
+#' rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10, importance = "impurity_corrected")
 #'
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
 #'
-generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL){
+generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = TRUE, importance.thresh = 0.1){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -61,9 +63,12 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     stop("You have to provide a train data set for generating the artificial representative tree.")
   }
 
-
   if ("try-error" %in% class(try(predict(rf, data = train_data), silent = TRUE))){
     stop("The provided train data set does not fit to the provided ranger object")
+  }
+
+  if (importance.mode & rf$importance.mode == "none"){
+    stop("Please provide importance values in ranger object")
   }
 
   ## Extract split points ----
@@ -87,6 +92,18 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
                              split_var   = data.table::tstrsplit(split_points, "_")[[2]],
                              split_val   = as.numeric(data.table::tstrsplit(split_points, "_")[[3]])
   )
+
+  if (importance.mode){
+    # Recode variable importance values
+    imp <- data.frame(imp = rf$variable.importance, var = names(rf$variable.importance))
+    # Select fraction of variables
+    num_var <- importance.thresh*nrow(imp)
+    imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:num_var],]
+
+    # Match split points with importance values
+    split_points <- split_points[split_points$split_var %in% imp$var,]
+  }
+
   split_points <- list(split_points)
 
   ## Initialize tree ----
@@ -164,60 +181,61 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
 
   while(node <= max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]])) + 1){
     max_node <- max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]]))
+    if (nrow(split_points[[node]]) > 0){
+      ## Generate trees for all possible split points
+      possible_rf_rep <- apply(split_points[[node]], 1, function(X){
+        return(add_node(rf_rep, node, X))
+      })
 
-    ## Generate trees for all possible split points
-    possible_rf_rep <- apply(split_points[[node]], 1, function(X){
-      return(add_node(rf_rep, node, X))
-    })
+      ## Calculate mean distances for all possible split points
+      mean_distances <- lapply(possible_rf_rep, function(X){
+        dist <- suppressMessages(mean(measure_distances(X, metric, test_data)[rf_rep$num.trees]))
+        return(dist)
+      })
+      mean_distances <- unlist(mean_distances)
 
-    ## Calculate mean distances for all possible split points
-    mean_distances <- lapply(possible_rf_rep, function(X){
-      dist <- suppressMessages(mean(measure_distances(X, metric, test_data)[rf_rep$num.trees]))
-      return(dist)
-    })
-    mean_distances <- unlist(mean_distances)
+      ## Estimate prediction accuracy for all possible split points
+      pred_error <- lapply(possible_rf_rep, function(X){
+        pred <- suppressWarnings(predict(X, train_data, predict.all = TRUE)$predictions[,X$num.trees])
+        if(rf_rep$treetype == "Classification"){
+          true <- as.character(train_data[,names(train_data) == dependent_varname])
+          pred <- rf$forest$levels[pred]
+          return(sum(pred != true)/length(pred))
+        } else if(rf_rep$treetype == "Regression"){
+          true <- as.numeric(train_data[,names(train_data) == dependent_varname])
+          return(sum((pred - true)^2)/length(pred))
+        }
+      })
+      pred_error <- unlist(pred_error)
 
-    ## Estimate prediction accuracy for all possible split points
-    pred_error <- lapply(possible_rf_rep, function(X){
-      pred <- predict(X, train_data, predict.all = TRUE)$predictions[,X$num.trees]
-      if(rf_rep$treetype == "Classification"){
-        true <- as.character(train_data[,names(train_data) == dependent_varname])
-        pred <- rf$forest$levels[pred]
-        return(sum(pred != true)/length(pred))
-      } else if(rf_rep$treetype == "Regression"){
-        true <- as.numeric(train_data[,names(train_data) == dependent_varname])
-        return(sum((pred - true)^2)/length(pred))
-      }
-    })
-    pred_error <- unlist(pred_error)
+      ## Select optimal tree
+      if(min(mean_distances, na.rm = TRUE) < Inf){
+        min_dist_trees <- which(mean_distances == min(mean_distances, na.rm = TRUE))
+        opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees]))
+        opt_idx  <- min_dist_trees[opt_tree][1]
 
-    ## Select optimal tree
-    if(min(mean_distances, na.rm = TRUE) < Inf){
-      min_dist_trees <- which(mean_distances == min(mean_distances, na.rm = TRUE))
-      opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees]))
-      opt_idx  <- min_dist_trees[opt_tree][1]
+        if(mean_distances[opt_idx] < min_dist){
+          ## Set new rf_rep
+          rf_rep <- possible_rf_rep[[opt_idx]]
 
-      if(mean_distances[opt_idx] < 0.95*min_dist){
-        ## Set new rf_rep
-        rf_rep <- possible_rf_rep[[opt_idx]]
+          ## Set possible new split_points
+          used_split_point <- split_points[[node]][opt_idx,]
+          split_points[[max_node + 2]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val < used_split_point$split_val,]
+          split_points[[max_node + 3]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val > used_split_point$split_val,]
 
-        ## Set possible new split_points
-        used_split_point <- split_points[[node]][opt_idx,]
-        split_points[[max_node + 2]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val < used_split_point$split_val,]
-        split_points[[max_node + 3]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val > used_split_point$split_val,]
+          ## Set train_data
+          node_data_left <- node_data[[node]]
+          node_data_left <- node_data_left[node_data_left[,names(node_data_left) == used_split_point$split_var] <= used_split_point$split_val,]
 
-        ## Set train_data
-        node_data_left <- node_data[[node]]
-        node_data_left <- node_data_left[node_data_left[,names(node_data_left) == used_split_point$split_var] <= used_split_point$split_val,]
+          node_data_right <- node_data[[node]]
+          node_data_right <- node_data_right[node_data_right[,names(node_data_right) == used_split_point$split_var] > used_split_point$split_val,]
 
-        node_data_right <- node_data[[node]]
-        node_data_right <- node_data_right[node_data_right[,names(node_data_right) == used_split_point$split_var] > used_split_point$split_val,]
+          node_data[[max_node + 2]] <- node_data_left
+          node_data[[max_node + 3]] <- node_data_right
 
-        node_data[[max_node + 2]] <- node_data_left
-        node_data[[max_node + 3]] <- node_data_right
-
-        min_dist <- mean_distances[opt_idx]
-        min_pred_error <- pred_error[opt_idx]
+          min_dist <- mean_distances[opt_idx]
+          min_pred_error <- pred_error[opt_idx]
+        }
       }
     }
 
