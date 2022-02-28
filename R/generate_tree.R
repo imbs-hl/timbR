@@ -211,7 +211,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
       ## Select optimal tree
       if(min(mean_distances, na.rm = TRUE) < Inf){
         min_dist_trees <- which(mean_distances == min(mean_distances, na.rm = TRUE))
-        opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees]))
+        opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees], na.rm = TRUE))
         opt_idx  <- min_dist_trees[opt_tree][1]
 
         if(mean_distances[opt_idx] < min_dist){
