@@ -134,8 +134,8 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
   ## Add new node ----
   add_node <- function(rf_rep, node, split_point){
     split_varID <- split_point[1]
-    split_var   <- split_point[2]
-    split_val   <- split_point[3]
+    split_var   <- as.character(split_point[2])
+    split_val   <- as.numeric(split_point[3])
 
     max_node <- max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]]))
 
