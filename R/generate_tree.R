@@ -80,18 +80,17 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     internal_nodes <- tree_info[tree_info$terminal == FALSE,]
 
     ## Extract split points
-    split_points <- paste(internal_nodes$splitvarID, internal_nodes$splitvarName, internal_nodes$splitval, sep = "_")
-    split_points <- sort(unique(split_points))
+    #split_points <- paste(internal_nodes$splitvarID, internal_nodes$splitvarName, internal_nodes$splitval, sep = "_")
+    split_points <- data.frame(split_varID   = internal_nodes$splitvarID,
+                               split_var     = internal_nodes$splitvarName,
+                               split_val     = internal_nodes$splitval)
+    split_points <- unique(split_points)
     return(split_points)
   })
 
   ## Unlist split points
-  split_points <- unlist(split_points)
-  split_points <- sort(unique(split_points))
-  split_points <- data.frame(split_varID = as.numeric(data.table::tstrsplit(split_points, "_")[[1]]),
-                             split_var   = data.table::tstrsplit(split_points, "_")[[2]],
-                             split_val   = as.numeric(data.table::tstrsplit(split_points, "_")[[3]])
-  )
+  split_points <- data.table::rbindlist(split_points)
+  split_points <- unique(split_points)
 
   if (importance.mode){
     # Recode variable importance values
@@ -159,10 +158,10 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
 
     ## Split node_data by splitpoint
     node_data_left <- node_data[[node]]
-    node_data_left <- node_data_left[node_data_left[,names(node_data_left) == split_var] <= split_val,]
+    node_data_left <- node_data_left[as.numeric(unlist(node_data_left[,names(node_data_left) == split_var])) <= split_val,]
 
     node_data_right <- node_data[[node]]
-    node_data_right <- node_data_right[node_data_right[,names(node_data_right) == split_var] > split_val,]
+    node_data_right <- node_data_right[as.numeric(unlist(node_data_right[,names(node_data_right) == split_var])) > split_val,]
 
     ## Add predictions
     if(rf_rep$treetype == "Classification"){
@@ -198,7 +197,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
       pred_error <- lapply(possible_rf_rep, function(X){
         pred <- suppressWarnings(predict(X, train_data, predict.all = TRUE)$predictions[,X$num.trees])
         if(rf_rep$treetype == "Classification"){
-          true <- as.character(train_data[,names(train_data) == dependent_varname])
+          true <- as.character(unlist(train_data[,names(train_data) == dependent_varname]))
           pred <- rf$forest$levels[pred]
           return(sum(pred != true)/length(pred))
         } else if(rf_rep$treetype == "Regression"){
@@ -225,10 +224,10 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
 
           ## Set train_data
           node_data_left <- node_data[[node]]
-          node_data_left <- node_data_left[node_data_left[,names(node_data_left) == used_split_point$split_var] <= used_split_point$split_val,]
+          node_data_left <- node_data_left[as.numeric(unlist(node_data_left[,names(node_data_left) == used_split_point$split_var])) <= used_split_point$split_val,]
 
           node_data_right <- node_data[[node]]
-          node_data_right <- node_data_right[node_data_right[,names(node_data_right) == used_split_point$split_var] > used_split_point$split_val,]
+          node_data_right <- node_data_right[as.numeric(unlist(node_data_right[,names(node_data_right) == used_split_point$split_var])) > used_split_point$split_val,]
 
           node_data[[max_node + 2]] <- node_data_left
           node_data[[max_node + 3]] <- node_data_right
@@ -239,7 +238,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
       }
     }
 
-    node <- node +1
+    node <- node + 1
   }
 
   ## Select and return final tree
