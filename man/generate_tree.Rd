@@ -6,11 +6,11 @@
 \usage{
 generate_tree(
   rf,
-  metric = "splitting variables",
+  metric = "weighted splitting variables",
   train_data,
   test_data = NULL,
-  importance.mode = TRUE,
-  importance.thresh = 0.1
+  importance.mode = FALSE,
+  imp.num.var = 1
 )
 }
 \arguments{
@@ -22,9 +22,11 @@ generate_tree(
 \item{train_data}{Data set for training of artificial representative tree}
 
 \item{importance.mode}{If TRUE variable importance measures will be used to prioritize next split in tree generation.
-Imporves speed. Variable importance values have to be included in ranger object.}
+Improves speed. Variable importance values have to be included in ranger object.}
 
-\item{...}{Further paramters passed on to measure_distances (e.g. test_data)}
+\item{imp.num.var}{Number of variables to be pre selected based on importance values.}
+
+\item{...}{Further parameters passed on to measure_distances (e.g. test_data)}
 }
 \value{
 \item{\code{rep.trees}}{\code{ranger} object containing the artificial most representative tree}
@@ -39,7 +41,12 @@ require(ranger)
 require(timbR)
 
 ## Train random forest with ranger
-rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10, importance = "impurity_corrected")
+rg.iris <- ranger(Species ~ .,
+                  data = iris,
+                  write.forest=TRUE,
+                  num.trees = 10,
+                  importance = "permutation"
+                  )
 
 ## Calculate pair-wise distances for all trees
 rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)

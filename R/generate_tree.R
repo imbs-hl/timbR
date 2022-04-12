@@ -9,12 +9,18 @@
 #'                        "weighted splitting variables", "terminal nodes" and "prediction".
 #' @param train_data      Data set for training of artificial representative tree
 #' @param importance.mode If TRUE variable importance measures will be used to prioritize next split in tree generation.
-#'                        Imporves speed. Variable importance values have to be included in ranger object.
-#' @param ...             Further paramters passed on to measure_distances (e.g. test_data)
+#'                        Improves speed. Variable importance values have to be included in ranger object.
+#' @param imp.num.var     Number of variables to be pre selected based on importance values.
+#' @param ...             Further parameters passed on to measure_distances (e.g. test_data)
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
 #' @return
 #'   \item{\code{rep.trees}}{\code{ranger} object containing the artificial most representative tree}
+#' @import ranger
+#' @import dplyr
+#' @import checkmate
+#' @import data.table
+#'
 #' @export generate_tree
 #'
 #' @examples
@@ -22,12 +28,17 @@
 #' require(timbR)
 #'
 #' ## Train random forest with ranger
-#' rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10, importance = "impurity_corrected")
+#' rg.iris <- ranger(Species ~ .,
+#'                   data = iris,
+#'                   write.forest=TRUE,
+#'                   num.trees = 10,
+#'                   importance = "permutation"
+#'                   )
 #'
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
 #'
-generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = TRUE, importance.thresh = 0.1){
+generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, importance.mode = FALSE, imp.num.var = 1){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -71,6 +82,10 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     stop("Please provide importance values in ranger object")
   }
 
+  if (imp.num.var > length(rf$variable.importance)){
+    stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
+  }
+
   ## Extract split points ----
   split_points <- lapply(1:rf$num.trees, function(X){
     ## Extract tree info
@@ -96,8 +111,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     # Recode variable importance values
     imp <- data.frame(imp = rf$variable.importance, var = names(rf$variable.importance))
     # Select fraction of variables
-    num_var <- importance.thresh*nrow(imp)
-    imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:num_var],]
+    imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:imp.num.var],]
 
     # Match split points with importance values
     split_points <- split_points[split_points$split_var %in% imp$var,]
@@ -107,6 +121,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
 
   ## Initialize tree ----
   min_dist <- Inf
+  min_dist_tree <- Inf
   min_pred_error <- Inf
   node_data <- list(train_data)
 
@@ -126,9 +141,6 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
   } else if(rf_rep$treetype == "Regression"){
     rf_rep$forest$split.values[[rf_rep$num.trees]] <- mean(train_data[,names(train_data) == dependent_varname])
   }
-
-  ## Generate tree ----
-  node <- 1
 
   ## Add new node ----
   add_node <- function(rf_rep, node, split_point){
@@ -178,13 +190,20 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     return(rf_rep)
   }
 
-  while(node <= max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]])) + 1){
+
+  while(min_dist_tree < min_dist | min_dist == Inf){
+    min_dist <- min_dist_tree
     max_node <- max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]]))
-    if (nrow(split_points[[node]]) > 0){
+    terminal_nodes <- which(treeInfo(rf_rep, rf_rep$num.trees)$terminal)
+    if (nrow(rbindlist(split_points[terminal_nodes])) > 0){
       ## Generate trees for all possible split points
-      possible_rf_rep <- apply(split_points[[node]], 1, function(X){
-        return(add_node(rf_rep, node, X))
+      possible_rf_rep <- lapply(terminal_nodes, function(x){
+        possible_rf_rep <- apply(split_points[[x]], 1, function(X){
+          return(add_node(rf_rep, x, X))
+        })
       })
+
+      possible_rf_rep <- unlist(possible_rf_rep, recursive = FALSE)
 
       ## Calculate mean distances for all possible split points
       mean_distances <- lapply(possible_rf_rep, function(X){
@@ -215,10 +234,15 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
 
         if(mean_distances[opt_idx] < min_dist){
           ## Set new rf_rep
+          node <- which(treeInfo(rf_rep, rf_rep$num.trees)$terminal != treeInfo(possible_rf_rep[[opt_idx]], possible_rf_rep[[opt_idx]]$num.trees)$terminal[1:nrow(treeInfo(rf_rep, rf_rep$num.trees))])
+
           rf_rep <- possible_rf_rep[[opt_idx]]
 
           ## Set possible new split_points
           used_split_point <- split_points[[node]][opt_idx,]
+          used_split_point <- data.frame(split_varID = treeInfo(rf_rep, rf_rep$num.trees)$splitvarID[node],
+                                         split_val   = treeInfo(rf_rep, rf_rep$num.trees)$splitval[node],
+                                         split_var   = treeInfo(rf_rep, rf_rep$num.trees)$splitvarName[node])
           split_points[[max_node + 2]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val < used_split_point$split_val,]
           split_points[[max_node + 3]] <- split_points[[node]][split_points[[node]]$split_varID != used_split_point$split_varID | split_points[[node]]$split_val > used_split_point$split_val,]
 
@@ -232,13 +256,11 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
           node_data[[max_node + 2]] <- node_data_left
           node_data[[max_node + 3]] <- node_data_right
 
-          min_dist <- mean_distances[opt_idx]
+          min_dist_tree <- mean_distances[opt_idx]
           min_pred_error <- pred_error[opt_idx]
         }
       }
     }
-
-    node <- node + 1
   }
 
   ## Select and return final tree
