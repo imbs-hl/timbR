@@ -150,24 +150,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
     max_node <- max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]]))
 
-    ## Add child nodes
-    rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][node] <- max_node + 1
-    rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][node] <- max_node + 2
-
-    rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][max_node + 2] <- 0
-    rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][max_node + 2] <- 0
-
-    rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][max_node + 3] <- 0
-    rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][max_node + 3] <- 0
-
-    ## Add split varID
-    rf_rep$forest$split.varIDs[[rf_rep$num.trees]][node] <- as.numeric(split_varID)
-    rf_rep$forest$split.varIDs[[rf_rep$num.trees]][max_node + 2] <- 0
-    rf_rep$forest$split.varIDs[[rf_rep$num.trees]][max_node + 3] <- 0
-
-    ## Add split value
-    rf_rep$forest$split.values[[rf_rep$num.trees]][node] <- as.numeric(split_val)
-
     ## Split node_data by splitpoint
     node_data_left <- node_data[[node]]
     node_data_left <- node_data_left[as.numeric(unlist(node_data_left[,names(node_data_left) == split_var])) <= split_val,]
@@ -175,19 +157,49 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     node_data_right <- node_data[[node]]
     node_data_right <- node_data_right[as.numeric(unlist(node_data_right[,names(node_data_right) == split_var])) > split_val,]
 
-    ## Add predictions
+    ## Check if split is allowed
     if(rf_rep$treetype == "Classification"){
-      prediction <- names(which.max(table(node_data_left[,names(node_data_left) == dependent_varname])))
-      rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 2] <- as.numeric(which(rf_rep$forest$levels == prediction))
-
-      prediction <- names(which.max(table(node_data_right[,names(node_data_right) == dependent_varname])))
-      rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 3] <- as.numeric(which(rf_rep$forest$levels == prediction))
-
+      prediction_left <- names(which.max(table(node_data_left[,names(node_data_left) == dependent_varname])))
+      prediction_right <- names(which.max(table(node_data_right[,names(node_data_right) == dependent_varname])))
     } else if(rf_rep$treetype == "Regression"){
-      rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 2] <- mean(node_data_left[,names(node_data_left) == dependent_varname])
-      rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 3] <- mean(node_data_right[,names(node_data_right) == dependent_varname])
+      prediction_left <- mean(node_data_left[,names(node_data_left) == dependent_varname])
+      prediction_right <- mean(node_data_right[,names(node_data_right) == dependent_varname])
     }
-    return(rf_rep)
+    if(prediction_left != prediction_right){
+      ## Add child nodes
+      rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][node] <- max_node + 1
+      rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][node] <- max_node + 2
+
+      rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][max_node + 2] <- 0
+      rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][max_node + 2] <- 0
+
+      rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][max_node + 3] <- 0
+      rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][max_node + 3] <- 0
+
+      ## Add split varID
+      rf_rep$forest$split.varIDs[[rf_rep$num.trees]][node] <- as.numeric(split_varID)
+      rf_rep$forest$split.varIDs[[rf_rep$num.trees]][max_node + 2] <- 0
+      rf_rep$forest$split.varIDs[[rf_rep$num.trees]][max_node + 3] <- 0
+
+      ## Add split value
+      rf_rep$forest$split.values[[rf_rep$num.trees]][node] <- as.numeric(split_val)
+
+      ## Add predictions
+      if(rf_rep$treetype == "Classification"){
+        prediction <- names(which.max(table(node_data_left[,names(node_data_left) == dependent_varname])))
+        rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 2] <- as.numeric(which(rf_rep$forest$levels == prediction))
+
+        prediction <- names(which.max(table(node_data_right[,names(node_data_right) == dependent_varname])))
+        rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 3] <- as.numeric(which(rf_rep$forest$levels == prediction))
+
+      } else if(rf_rep$treetype == "Regression"){
+        rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 2] <- mean(node_data_left[,names(node_data_left) == dependent_varname])
+        rf_rep$forest$split.values[[rf_rep$num.trees]][max_node + 3] <- mean(node_data_right[,names(node_data_right) == dependent_varname])
+      }
+      return(rf_rep)
+    }else{
+      return(rf_rep)
+    }
   }
 
 
@@ -204,6 +216,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       })
 
       possible_rf_rep <- unlist(possible_rf_rep, recursive = FALSE)
+
 
       ## Calculate mean distances for all possible split points
       mean_distances <- lapply(possible_rf_rep, function(X){
