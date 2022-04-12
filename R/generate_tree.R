@@ -16,6 +16,11 @@
 #' @author Bjoern-Hergen Laabs, M.Sc.
 #' @return
 #'   \item{\code{rep.trees}}{\code{ranger} object containing the artificial most representative tree}
+#' @import ranger
+#' @import dplyr
+#' @import checkmate
+#' @import data.table
+#'
 #' @export generate_tree
 #'
 #' @examples
@@ -23,12 +28,17 @@
 #' require(timbR)
 #'
 #' ## Train random forest with ranger
-#' rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10, importance = "impurity_corrected")
+#' rg.iris <- ranger(Species ~ .,
+#'                   data = iris,
+#'                   write.forest=TRUE,
+#'                   num.trees = 10,
+#'                   importance = "permutation"
+#'                   )
 #'
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
 #'
-generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = FALSE, imp.num.var = 1){
+generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, importance.mode = FALSE, imp.num.var = 1){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
