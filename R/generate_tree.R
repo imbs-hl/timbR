@@ -9,8 +9,9 @@
 #'                        "weighted splitting variables", "terminal nodes" and "prediction".
 #' @param train_data      Data set for training of artificial representative tree
 #' @param importance.mode If TRUE variable importance measures will be used to prioritize next split in tree generation.
-#'                        Imporves speed. Variable importance values have to be included in ranger object.
-#' @param ...             Further paramters passed on to measure_distances (e.g. test_data)
+#'                        Improves speed. Variable importance values have to be included in ranger object.
+#' @param imp.num.var     Number of variables to be pre selected based on importance values.
+#' @param ...             Further parameters passed on to measure_distances (e.g. test_data)
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
 #' @return
@@ -27,7 +28,7 @@
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
 #'
-generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = TRUE, importance.thresh = 0.1){
+generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = TRUE, imp.num.var = 1){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -71,6 +72,10 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     stop("Please provide importance values in ranger object")
   }
 
+  if (imp.num.var > length(rf$variable.importance)){
+    stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
+  }
+
   ## Extract split points ----
   split_points <- lapply(1:rf$num.trees, function(X){
     ## Extract tree info
@@ -96,8 +101,7 @@ generate_tree <- function(rf, metric = "splitting variables", train_data, test_d
     # Recode variable importance values
     imp <- data.frame(imp = rf$variable.importance, var = names(rf$variable.importance))
     # Select fraction of variables
-    num_var <- importance.thresh*nrow(imp)
-    imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:num_var],]
+    imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:imp.num.var],]
 
     # Match split points with importance values
     split_points <- split_points[split_points$split_var %in% imp$var,]
