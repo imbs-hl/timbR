@@ -28,7 +28,7 @@
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
 #'
-generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = TRUE, imp.num.var = 1){
+generate_tree <- function(rf, metric = "splitting variables", train_data, test_data = NULL, importance.mode = FALSE, imp.num.var = 1){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
