@@ -165,7 +165,10 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       prediction_left <- mean(node_data_left[,names(node_data_left) == dependent_varname])
       prediction_right <- mean(node_data_right[,names(node_data_right) == dependent_varname])
     }
-    if(prediction_left != prediction_right){
+    ## Exclude nonsense splits
+    if(is.na(prediction_left) | is.na(prediction_right) | is.nan(prediction_left) | is.nan(prediction_right) | is.infinite(prediction_left) | is.infinite(prediction_right)){
+      return(rf_rep)
+    } else if(prediction_left != prediction_right){
       ## Add child nodes
       rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[1]][node] <- max_node + 1
       rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]][[2]][node] <- max_node + 2
