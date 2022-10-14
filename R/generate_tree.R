@@ -297,3 +297,4 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   ## Return reduced ranger object
   return(rf_rep)
 }
+# Test
