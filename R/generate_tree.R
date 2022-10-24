@@ -82,6 +82,12 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     stop("Please provide importance values in ranger object")
   }
 
+  if (imp.num.var > 0 & rf$importance.mode == "none" |
+      imp.num.var > 0 & importance.mode == FALSE |
+      rf$importance.mode != "none" & importance.mode == FALSE){
+    stop("Your input was not consistent regarding the use or non-use of importance")
+  }
+
   if (imp.num.var > length(rf$variable.importance)){
     stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
   }
