@@ -171,6 +171,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     node_data_right <- node_data[[node]]
     node_data_right <- node_data_right[as.numeric(unlist(node_data_right[,names(node_data_right) == split_var])) > split_val,]
 
+    ## check if data is passed in the left and right nodes, otherwise the split would be useless
+    if(nrow(node_data_left) == 0 | nrow(node_data_right) == 0){
+      return(rf_rep)
+    }
+
     ## Check if split is allowed
     if(rf_rep$treetype == "Classification"){
       prediction_left <- names(which.max(table(node_data_left[,names(node_data_left) == dependent_varname])))
