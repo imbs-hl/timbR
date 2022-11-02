@@ -140,7 +140,15 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   rf_rep$forest$split.varIDs[[rf_rep$num.trees]] <- 0
 
   ## Add prediction
-  dependent_varname <- strsplit(as.character(rf$call)[2], " ~")[[1]][1]
+  if(!is.null(rf$call$y)){
+    dependent_varname <- rf$call$y
+  }else if(grepl("~", paste0(rf$call, collapse=" "))){
+    dependent_varname <- gsub("ranger\\s*(.*)\\s*~.*", "\\1", paste0(rf$call, collapse=" "))
+    dependent_varname <- gsub("\\s", "", dependent_varname)
+  }else{
+    stop("Please use either the call with the formula or with x and y")
+  }
+
   if(rf_rep$treetype == "Classification"){
     prediction <- names(which.max(table(train_data[,names(train_data) == dependent_varname])))
     rf_rep$forest$split.values[[rf_rep$num.trees]] <- as.numeric(which(rf_rep$forest$levels == prediction))
@@ -162,6 +170,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
     node_data_right <- node_data[[node]]
     node_data_right <- node_data_right[as.numeric(unlist(node_data_right[,names(node_data_right) == split_var])) > split_val,]
+
+    ## check if data is passed in the left and right nodes, otherwise the split would be useless
+    if(nrow(node_data_left) == 0 | nrow(node_data_right) == 0){
+      return(rf_rep)
+    }
 
     ## Check if split is allowed
     if(rf_rep$treetype == "Classification"){
