@@ -4,14 +4,15 @@
 #'
 #' @title Generate most representative tree for a random forest
 #'
-#' @param rf              Object of class \code{ranger} used with \code{write.forest = TRUE} to generate tree for.
-#' @param metric          Specification of the tree metric. Available are "splitting variables",
-#'                        "weighted splitting variables", "terminal nodes" and "prediction".
-#' @param train_data      Data set for training of artificial representative tree
-#' @param importance.mode If TRUE variable importance measures will be used to prioritize next split in tree generation.
-#'                        Improves speed. Variable importance values have to be included in ranger object.
-#' @param imp.num.var     Number of variables to be pre selected based on importance values.
-#' @param ...             Further parameters passed on to measure_distances (e.g. test_data)
+#' @param rf                Object of class \code{ranger} used with \code{write.forest = TRUE} to generate tree for.
+#' @param metric            Specification of the tree metric. Available are "splitting variables",
+#'                          "weighted splitting variables", "terminal nodes" and "prediction".
+#' @param train_data        Data set for training of artificial representative tree
+#' @param dependent_varname Name of the dependent variable used to create the forest
+#' @param importance.mode   If TRUE variable importance measures will be used to prioritize next split in tree generation.
+#'                          Improves speed. Variable importance values have to be included in ranger object.
+#' @param imp.num.var       Number of variables to be pre selected based on importance values.
+#' @param ...               Further parameters passed on to measure_distances (e.g. test_data)
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
 #' @return
@@ -36,9 +37,9 @@
 #'                   )
 #'
 #' ## Calculate pair-wise distances for all trees
-#' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
+#' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE)
 #'
-generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, importance.mode = FALSE, imp.num.var = 1){
+generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = 1){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -140,15 +141,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   rf_rep$forest$split.varIDs[[rf_rep$num.trees]] <- 0
 
   ## Add prediction
-  if(!is.null(rf$call$y)){
-    dependent_varname <- rf$call$y
-  }else if(grepl("~", paste0(rf$call, collapse=" "))){
-    dependent_varname <- gsub("ranger\\s*(.*)\\s*~.*", "\\1", paste0(rf$call, collapse=" "))
-    dependent_varname <- gsub("\\s", "", dependent_varname)
-  }else{
-    stop("Please use either the call with the formula or with x and y")
-  }
-
   if(rf_rep$treetype == "Classification"){
     prediction <- names(which.max(table(train_data[,names(train_data) == dependent_varname])))
     rf_rep$forest$split.values[[rf_rep$num.trees]] <- as.numeric(which(rf_rep$forest$levels == prediction))
