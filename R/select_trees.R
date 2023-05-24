@@ -68,6 +68,10 @@ select_trees <- function(rf, num.trees = NULL, distance.matrix = NULL){
   rf_rep$forest$split.varIDs  <- rf_rep$forest$split.varIDs[rep_trees_idx]
   rf_rep$forest$split.values  <- rf_rep$forest$split.values[rep_trees_idx]
 
+  if (rf_rep$treetype == "Probability estimation"){
+    rf_rep$forest$terminal.class.counts <- rf_rep$forest$terminal.class.counts[rep_trees_idx]
+  }
+
   if(length(rf$inbag.counts) > 0){
     rf_rep$inbag.counts <- rf_rep$inbag.counts[rep_trees_idx]
   }

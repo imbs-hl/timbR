@@ -17,7 +17,7 @@ In version 1.0 most representaive trees can be selected based on four different 
 To install the timbR R package, run
 
 ```R
-install.packaged("devtools")
+install.packages("devtools")
 library(devtools)
 devtools::install_github("imbs-hl/timbR")
 ```
