@@ -8,7 +8,7 @@ Description: A collection of different methods to identify representative trees 
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Imports: ranger, checkmate, dplyr, data.table
+Imports: ranger, checkmate, dplyr, data.table, knitr, tinytex
 Depends: R (>= 3.1)
 Suggests: testthat
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
