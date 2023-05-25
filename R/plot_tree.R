@@ -1,11 +1,11 @@
 #' Generates pdf document with plot from decision tree (classification or regression)
 #' @param tree_info_df            Data frame containing information about the structure of the decision tree, which is built like a "treeInfo()" data frame from the package "ranger"
 #' @param train_data_df           Data frame of the training data with which the random forest was trained
-#' @param rf_list                 Random forest, which is built like the one you get from ranger(), inbag data must be available
+#' @param rf_list                 Random forest, which is built like the one you get from ranger()
 #' @param tree_number             Number of the decision tree of the rf_list to be displayed
 #' @param dependent_var           Name of the column of the dependent variable in training data
-#' @param show_sample_size        Option to display percentage of observations that reach nodes during training (TRUE or FALSE, TRUE could be time consuming)
-#' @param show_prediction_nodes   Option to display prediction in all nodes (TRUE or FALSE, TRUE could be time consuming)
+#' @param show_sample_size        Option to display percentage of observations that reach nodes during training, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
+#' @param show_prediction_nodes   Option to display prediction in all nodes, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
 #' @param vert_sep                   Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                   Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @param work_dir                Path where plot should be saved
@@ -25,6 +25,7 @@
 #' @examples
 #' require(dplyr)
 #' require(knitr)
+#' require(tinytex)
 #' require(ranger)
 #' require(timbR)
 #'
@@ -147,6 +148,7 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   if (plot_name == ""){
     stop("Please enter a name for the plot_name.")
   }
+  ## Plot tree ----
 
   # Generate Latex code for the plot of the tree
   tree_code <- paste0("[",
@@ -193,4 +195,3 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   # save plot as PDF document
   pdflatex(temp_tex_path, pdf_file = file.path(work_dir, paste0(plot_name, ".pdf")), clean = TRUE)
 }
-
