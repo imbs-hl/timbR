@@ -9,8 +9,10 @@ generate_tree(
   metric = "weighted splitting variables",
   train_data,
   test_data = NULL,
+  dependent_varname,
   importance.mode = FALSE,
-  imp.num.var = 1
+  imp.num.var = NULL,
+  ...
 )
 }
 \arguments{
@@ -20,6 +22,10 @@ generate_tree(
 "weighted splitting variables", "terminal nodes" and "prediction".}
 
 \item{train_data}{Data set for training of artificial representative tree}
+
+\item{test_data}{Additional data set comparable to the data set \code{rf} was build on.}
+
+\item{dependent_varname}{Name of the dependent variable used to create the forest}
 
 \item{importance.mode}{If TRUE variable importance measures will be used to prioritize next split in tree generation.
 Improves speed. Variable importance values have to be included in ranger object.}
@@ -49,7 +55,7 @@ rg.iris <- ranger(Species ~ .,
                   )
 
 ## Calculate pair-wise distances for all trees
-rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris)
+rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 1)
 
 }
 \author{

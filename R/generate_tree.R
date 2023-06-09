@@ -12,6 +12,7 @@
 #' @param importance.mode   If TRUE variable importance measures will be used to prioritize next split in tree generation.
 #'                          Improves speed. Variable importance values have to be included in ranger object.
 #' @param imp.num.var       Number of variables to be pre selected based on importance values.
+#' @param test_data         Additional data set comparable to the data set \code{rf} was build on.
 #' @param ...               Further parameters passed on to measure_distances (e.g. test_data)
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
@@ -37,9 +38,9 @@
 #'                   )
 #'
 #' ## Calculate pair-wise distances for all trees
-#' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE)
+#' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 1)
 #'
-generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = 1){
+generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = NULL, ...){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -83,15 +84,16 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     stop("Please provide importance values in ranger object")
   }
 
-  if (imp.num.var > 0 & rf$importance.mode == "none" |
-      imp.num.var > 0 & importance.mode == FALSE |
-      rf$importance.mode != "none" & importance.mode == FALSE){
-    stop("Your input was not consistent regarding the use or non-use of importance")
+  if (!is.null(imp.num.var)){
+    if (imp.num.var > 0 & rf$importance.mode == "none" |
+        imp.num.var > 0 & importance.mode == FALSE){
+      stop("Your input was not consistent regarding the use or non-use of importance.")
+    }
+    if (imp.num.var > length(rf$variable.importance)){
+      stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
+    }
   }
 
-  if (imp.num.var > length(rf$variable.importance)){
-    stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
-  }
 
   ## Extract split points ----
   split_points <- lapply(1:rf$num.trees, function(X){
