@@ -11,9 +11,11 @@
 #' @param dependent_varname Name of the dependent variable used to create the forest
 #' @param importance.mode   If TRUE variable importance measures will be used to prioritize next split in tree generation.
 #'                          Improves speed. Variable importance values have to be included in ranger object.
-#' @param imp.num.var       Number of variables to be pre selected based on importance values.
+#' @param imp.num.var       Number of variables to be pre selected based on importance values. If "automatic" the Boruta
+#'                          variable selection algorithm from Kursa et al. (2010) is used (could be time consuming).
+#'                          Insert a numeric value, if you want to define the number on your own.
 #' @param test_data         Additional data set comparable to the data set \code{rf} was build on.
-#' @param ...               Further parameters passed on to measure_distances (e.g. test_data)
+#' @param ...               Further parameters passed on to Boruta (e.g. pValue)
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
 #' @return
@@ -22,6 +24,7 @@
 #' @import dplyr
 #' @import checkmate
 #' @import data.table
+#' @import Boruta
 #'
 #' @export generate_tree
 #'
@@ -80,19 +83,37 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     stop("The provided train data set does not fit to the provided ranger object")
   }
 
+  if(importance.mode == TRUE & is.null(imp.num.var)){
+    stop("Please insert a number or the string 'automatic' for imp.num.var")
+  }
+
+  if(importance.mode == TRUE & !is.null(imp.num.var)){
+    if(!(is.numeric(imp.num.var) | imp.num.var == "automatic")){
+      stop("Please insert a number or the string 'automatic' for imp.num.var")
+    }
+  }
+
   if (importance.mode & rf$importance.mode == "none"){
     stop("Please provide importance values in ranger object")
   }
 
-  if (!is.null(imp.num.var)){
-    if (imp.num.var > 0 & rf$importance.mode == "none" |
-        imp.num.var > 0 & importance.mode == FALSE){
+  if(!is.null(imp.num.var)){
+    if (is.numeric(imp.num.var)){
+      if (imp.num.var > 0 & rf$importance.mode == "none" |
+          imp.num.var > 0 & importance.mode == FALSE){
+        stop("Your input was not consistent regarding the use or non-use of importance.")
+      }
+      if (imp.num.var > length(rf$variable.importance)){
+        stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
+      }
+    }
+
+    if (imp.num.var == "automatic" & (rf$importance.mode == "none" | importance.mode == FALSE)){
       stop("Your input was not consistent regarding the use or non-use of importance.")
     }
-    if (imp.num.var > length(rf$variable.importance)){
-      stop("You tried to select more variables by imp.num.var, than splitting variables in the random forest.")
-    }
   }
+
+
 
 
   ## Extract split points ----
@@ -116,14 +137,36 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   split_points <- data.table::rbindlist(split_points)
   split_points <- unique(split_points)
 
-  if (importance.mode){
-    # Recode variable importance values
-    imp <- data.frame(imp = rf$variable.importance, var = names(rf$variable.importance))
-    # Select fraction of variables
-    imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:imp.num.var],]
+  if(!is.null(imp.num.var)){
+    if(importance.mode & imp.num.var == "automatic"){
+      # Variable selection with Boruta algorithm from Kursa et al. (2010)
+      x = train_data %>%
+        select(-all_of(dependent_varname))
+      y = train_data %>%
+        select(all_of(dependent_varname)) %>%
+        unlist()
 
-    # Match split points with importance values
-    split_points <- split_points[split_points$split_var %in% imp$var,]
+      # Test for importance with Boruta
+      imp = Boruta(x = x, y = y, ...)$finalDecision
+
+      # Filter the important variables
+      var <- names(imp)
+      decision <- data.frame(var = var, decision = imp) %>%
+        filter(decision == "Confirmed")
+
+      # Match split points with importance values
+      split_points <- split_points[split_points$split_var %in% decision$var,]
+
+    }
+    if (importance.mode & is.numeric(imp.num.var)){
+      # Recode variable importance values
+      imp <- data.frame(imp = rf$variable.importance, var = names(rf$variable.importance))
+      # Select fraction of variables
+      imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:imp.num.var],]
+
+      # Match split points with importance values
+      split_points <- split_points[split_points$split_var %in% imp$var,]
+    }
   }
 
   split_points <- list(split_points)

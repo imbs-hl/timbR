@@ -14,6 +14,8 @@ test_that("Test correct input", {
   expect_silent(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species"))
   expect_silent(generate_tree(rf = rf, metric = "weighted splitting variables", train_data = iris, dependent_varname = "Species"))
   expect_silent(generate_tree(rf = rf, metric = "prediction", train_data = iris, test_data = iris, dependent_varname = "Species"))
+  expect_silent(generate_tree(rf = rf, metric = "prediction", train_data = iris, test_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 3))
+  expect_silent(generate_tree(rf = rf, metric = "prediction", train_data = iris, test_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = "automatic"))
   # expect_silent(generate_tree(rf = rf, metric = "terminal nodes", train_data = iris, test_data = iris, dependent_varname = "Species"))
 })
 
@@ -39,6 +41,10 @@ test_that("Test incorrect inputs", {
   expect_error(generate_tree(rf = rf, metric = "abc", train_data = iris, dependent_varname = "Species"))
   expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = 123, dependent_varname = "Species"))
   expect_error(generate_tree(rf = rf, metric = "prediction", train_data = iris, test_data = 123, dependent_varname = "Species"))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = "abc"))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = -1))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 123))
 })
 
 ## Test output

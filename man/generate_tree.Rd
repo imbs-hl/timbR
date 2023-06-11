@@ -30,9 +30,11 @@ generate_tree(
 \item{importance.mode}{If TRUE variable importance measures will be used to prioritize next split in tree generation.
 Improves speed. Variable importance values have to be included in ranger object.}
 
-\item{imp.num.var}{Number of variables to be pre selected based on importance values.}
+\item{imp.num.var}{Number of variables to be pre selected based on importance values. If "automatic" the Boruta
+variable selection algorithm from Kursa et al. (2010) is used (could be time consuming).
+Insert a numeric value, if you want to define the number on your own.}
 
-\item{...}{Further parameters passed on to measure_distances (e.g. test_data)}
+\item{...}{Further parameters passed on to Boruta (e.g. pValue)}
 }
 \value{
 \item{\code{rep.trees}}{\code{ranger} object containing the artificial most representative tree}
