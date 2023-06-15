@@ -23,8 +23,12 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
                         "")
   
   if(tree_info_df$terminal[node_id+1]){
+    prediction_nodes <- ifelse(show_prediction_nodes,
+                               get_prediction_terminal_node(tree_info_df, train_data_df, rf_list, dependent_var, tree_number, node_id),
+                               "")
     leaf <- paste0("{", 
-                   get_prediction_node(tree_info_df, train_data_df, rf_list, dependent_var, tree_number, node_id), 
+                   tree_info_df$prediction[node_id+1],
+                   prediction_nodes, 
                    sample_size,
                    "},", 
                    "align=center,",

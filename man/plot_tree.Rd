@@ -23,15 +23,15 @@ plot_tree(
 
 \item{train_data_df}{Data frame of the training data with which the random forest was trained}
 
-\item{rf_list}{Random forest, which is built like the one you get from ranger(), inbag data must be available}
+\item{rf_list}{Random forest, which is built like the one you get from ranger()}
 
 \item{tree_number}{Number of the decision tree of the rf_list to be displayed}
 
 \item{dependent_var}{Name of the column of the dependent variable in training data}
 
-\item{show_sample_size}{Option to display percentage of observations that reach nodes during training (TRUE or FALSE, TRUE could be time consuming)}
+\item{show_sample_size}{Option to display percentage of observations that reach nodes during training, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)}
 
-\item{show_prediction_nodes}{Option to display prediction in all nodes (TRUE or FALSE, TRUE could be time consuming)}
+\item{show_prediction_nodes}{Option to display prediction in all nodes, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)}
 
 \item{vert_sep}{Vertical spacing of nodes in mm (parameter from Latex package "forest")}
 
@@ -50,6 +50,7 @@ Generates pdf document with plot from decision tree (classification or regressio
 \examples{
 require(dplyr)
 require(knitr)
+require(tinytex)
 require(ranger)
 require(timbR)
 
