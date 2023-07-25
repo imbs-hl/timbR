@@ -6,7 +6,7 @@
 #'
 #' @param rf         Object of class \code{ranger} used with \code{write.forest = TRUE}.
 #' @param metric     Specification of the tree metric. Available are "splitting variables",
-#'                   "weighted splitting variables", "terminal nodes" and "prediction".
+#'                   "weighted splitting variables", "terminal nodes", "prediction" and "combined".
 #' @param test_data  Additional data set comparable to the data set \code{rf} was build on.
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
