@@ -15,6 +15,7 @@ dist1 <- measure_distances(rf = rf, metric = "splitting variables")
 dist2 <- measure_distances(rf = rf, metric = "weighted splitting variables")
 dist3 <- measure_distances(rf = rf, metric = "terminal nodes", test_data = test_data)
 dist4 <- measure_distances(rf = rf, metric = "prediction", test_data = test_data)
+dist5 <-  measure_distances(rf = rf, metric = "combined", test_data = test_data)
 
 ## test input
 test_that("Test input", {
@@ -23,6 +24,7 @@ test_that("Test input", {
   expect_error(measure_distances(rf = rf, metric = NULL))
   expect_error(measure_distances(rf = rf, metric = "terminal nodes", test_data = NULL))
   expect_error(measure_distances(rf = rf, metric = "prediction", test_data = NULL))
+  expect_error(measure_distances(rf = rf, metric = "combined", test_data = NULL))
 
   ## wrong input
   expect_error(measure_distances(rf = 12345, metric = metric))
@@ -46,4 +48,5 @@ test_that("Test output", {
   expect_equal(sum(is.na(dist2)), 0)
   expect_equal(sum(is.na(dist3)), 0)
   expect_equal(sum(is.na(dist4)), 0)
+  expect_equal(sum(is.na(dist5)), 0)
 })
