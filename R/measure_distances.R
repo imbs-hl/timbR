@@ -41,12 +41,12 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     stop("rf must be trained using write.forest = TRUE.")
   }
   if (!checkmate::testChoice(metric,
-                             choices = c("splitting variables", "weighted splitting variables", "terminal nodes", "prediction"))){
-    stop(paste("metric has to be from c('splitting variables', 'weighted splitting variables', 'terminal nodes', 'prediction')."))
+                             choices = c("splitting variables", "weighted splitting variables", "terminal nodes", "prediction", "combined"))){
+    stop(paste("metric has to be from c('splitting variables', 'weighted splitting variables', 'terminal nodes', 'prediction', 'combined')."))
   }
-  if (metric %in% c("terminal nodes", "prediction")){
+  if (metric %in% c("terminal nodes", "prediction", "combined")){
     if (checkmate::testNull(test_data)){
-      stop("You have to provide a test data set for distance measure by terminal nodes or prediction.")
+      stop("You have to provide a test data set for distance measure by terminal nodes, prediction or combined.")
     }
     if ("try-error" %in% class(try(predict(rf, data = test_data)))){
       stop("The provided test data set does not fit to the provided ranger object")
@@ -200,6 +200,22 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
       }
     }
   }
+
+  ## Calculation of a combined distance measure : weighted splitting variables and prediction
+  if (metric == "combined"){
+
+
+    # Calculation of th weighted and the prediction measure
+
+    w_dist <- weighted_dist(rf)
+    p_dist <- prediction_dist(rf, test_data)
+
+    # Calculation of the pairwise means
+
+    distances <- (w_dist + p_dist)/2
+
+  }
+
 
   ## Return distance matrix ----
   return(distances)
