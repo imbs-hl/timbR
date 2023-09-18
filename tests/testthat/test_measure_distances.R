@@ -32,7 +32,8 @@ test_that("Test input", {
   expect_error(measure_distances(rf = rf, metric = 12345))
   expect_error(measure_distances(rf = rf, metric = "prediction", test_data = "abc"))
   expect_error(measure_distances(rf = rf, metric = "prediction", test_data = test_data[1,]))
-
+  expect_error(measure_distances(rf = rf, metric = "combined", test_data = "abc"))
+  expect_error(measure_distances(rf = rf, metric = "combined", test_data = test_data[1,]))
   ## unnecassary input
   expect_message(measure_distances(rf = rf, metric = "splitting variables", test_data = test_data))
   expect_message(measure_distances(rf = rf, metric = "weighted splitting variables", test_data = test_data))

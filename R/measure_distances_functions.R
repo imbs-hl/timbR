@@ -1,13 +1,31 @@
+#' Funktionen zur Berechnung von verschiedenen paarweisen Distanzmaßen in Random Forests
+#'
+#' @param rf trainiertes ranger Objekt
+#' @param test_data Testdaten auf denen die prediction Distanz bestimmt werden kann
+#'
+#'
+
+
 library(ranger)
 
 ## Funktion zur Berechnung der verschiedenen Distanzmaße
 ## "weighted"
 
-rf <- ranger(Species ~ ., data = iris, num.trees = 10)
+# rf <- ranger(Species ~ ., data = iris, num.trees = 10)
 
   ## Calculation weighted version of d0 ----
-  weighted_dist <- function(rf){
+  weighted_dist_fun <- function(rf){
+
+    ## Prepare matrix for output ----
+    distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
+
+    ## Extract outcome id
+    outcome_id <- rf$forest$dependent.varID
+
+    ## Extract number of features
+    num_features <- rf$num.independent.variables
     ## Calculate usage score for each variable
+
     US <- lapply(1:rf$num.trees, function(i){
       ## initialize levels for ith tree
       split_level <- rep(1, length(rf$forest$split.varIDs[[i]]))
@@ -61,7 +79,16 @@ rf <- ranger(Species ~ ., data = iris, num.trees = 10)
 ## "prediction"
 
 ## Calculation for d2 of Banerjee et al. (2012) ----
-prediction_dist <- function(rf, test_data){
+prediction_dist_fun <- function(rf, test_data){
+
+  ## Prepare matrix for output ----
+  distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
+
+  ## Extract outcome id
+  outcome_id <- rf$forest$dependent.varID
+
+  ## Extract number of features
+  num_features <- rf$num.independent.variables
 
   ## Predict outcome for all test data
   pred <- predict(rf, data = test_data, predict.all = TRUE)
@@ -84,5 +111,89 @@ prediction_dist <- function(rf, test_data){
   }
   ## return of the distance matrix
   return(distances)
+}
+
+## "splitting Variables"
+
+## Calculation for d0 of Banerjee et al. (2012) ----
+splitting_variables_fun <- function(rf){
+
+  ## Prepare matrix for output ----
+  distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
+
+  ## Extract outcome id
+  outcome_id <- rf$forest$dependent.varID
+
+  ## Extract number of features
+  num_features <- rf$num.independent.variables
+
+
+  ## Simplify for each tree which features were used
+  feature_usage <- lapply(X      = 1:rf$num.trees,
+                          FUN    = function(x){
+                            splitting_variables <- sort(unique(treeInfo(rf, x)$splitvarID))
+                            fu <- rep(0, num_features)
+                            fu[(splitting_variables+1)] <- 1
+                            fu
+                          })
+
+  ## Calculate standardized pair-wise distances
+  for (i in 1:rf$num.trees){
+    for (j in 1:rf$num.trees){
+      distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
+    }
+  }
+}
+
+## "terminal Nodes"
+
+## Calculation for d1 of Banerjee et al. (2012) ----
+terminal_nodes_fun <- function(rf, test_data){
+
+  ## Prepare matrix for output ----
+  distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
+
+  ## Extract outcome id
+  outcome_id <- rf$forest$dependent.varID
+
+  ## Extract number of features
+  num_features <- rf$num.independent.variables
+
+
+  distances <- matrix(data = 0, nrow = rf$num.trees, ncol = rf$num.trees)
+
+  ## Initialize matrix for terminal nodes
+  term_node <- predict(rf, data = test_data, type = "terminalNodes")$predictions
+
+  ## Calculate if observations end in same terminal node for each tree
+  I <- list()
+
+  for (x in 1:rf$num.trees){
+    I[[x]] <- matrix(data = NA, nrow = nrow(test_data), ncol = nrow(test_data))
+
+    for (i in 1:nrow(test_data)){
+      for (j in 1:nrow(test_data)){
+        if (term_node[i,x] == term_node[j,x]){
+          I[[x]][i,j] <- 1
+        } else {
+          I[[x]][i,j] <- 0
+        }
+      }
+    }
+  }
+
+  ## Calculate distances
+  for (x in 1:rf$num.trees){
+    for (y in 1:rf$num.trees){
+      for (i in 1:(nrow(test_data)-1)){
+        for (j in (i+1):nrow(test_data)){
+          distances[x,y] <- distances[x,y] + abs(I[[x]][i,j] - I[[y]][i,j])
+        }
+      }
+    }
+  }
+
+  ## Normailze distances
+  distances <- distances / choose(nrow(test_data), 2)
 }
 
