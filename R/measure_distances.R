@@ -32,14 +32,13 @@
 #' measure_distances(rf = rg.iris, metric = "prediction", test_data = iris)
 #' measure_distances(rf = rg.iris, metric = "combined", test_data = iris)
 
-## Load Functions
-## TODO
+
 
 
 
 measure_distances <- function(rf, metric = "splitting variables", test_data = NULL){
 
-source(file.path("./measure_distances_functions", "measure_distances_functions.R"))
+source(file.path("~/git_timbR/timbR/R", "measure_distances_functions.R"))
 
   ## Check inputs ----
   if (!checkmate::testClass(rf, "ranger")){
@@ -79,7 +78,7 @@ source(file.path("./measure_distances_functions", "measure_distances_functions.R
 
   ## Calculation for d0 of Banerjee et al. (2012) ----
   if (metric == "splitting variables"){
-    distance <- splitting_variables_fun(rf)
+    distances <- splitting_variables_fun(rf)
   }
 
   ## Calculation weighted version of d0 ----
@@ -103,8 +102,8 @@ source(file.path("./measure_distances_functions", "measure_distances_functions.R
 
     # Calculation of th weighted and the prediction measure
 
-    w_dist <- weighted_dist(rf)
-    p_dist <- prediction_dist(rf, test_data)
+    w_dist <- weighted_dist_fun(rf)
+    p_dist <- prediction_dist_fun(rf, test_data)
 
     # Calculation of the pairwise means
 

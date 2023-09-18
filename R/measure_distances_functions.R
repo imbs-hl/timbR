@@ -143,6 +143,8 @@ splitting_variables_fun <- function(rf){
       distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
     }
   }
+  ## return of the Distance Matrix
+  return(distances)
 }
 
 ## "terminal Nodes"
@@ -195,5 +197,7 @@ terminal_nodes_fun <- function(rf, test_data){
 
   ## Normailze distances
   distances <- distances / choose(nrow(test_data), 2)
+
+  return(distances)
 }
 
