@@ -1,6 +1,6 @@
 #' Get split criterion (levels) for factor or character variables
 #' Character variables are automatically turned into factors in ranger() from the package "ranger"
-#' Considers the three possibilities to treat and split factors (Parameter "respect.unordered.factors" in ranger()): 
+#' Considers the three possibilities to treat and split factors (Parameter "respect.unordered.factors" in ranger()):
 #' - Treat the factor like an ordinal variable ("none", "NULL" or "FALSE" in ranger())
 #' - Treat the factor as nominal and check all 2-partitions for split ("partition")
 #' - Treat factor as ordinal and determine optimal order of levels for the random forest ("order", "TRUE" in ranger())
@@ -13,8 +13,17 @@
 #' @returns                    Character with levels passed from the parent node to the considered node
 
 get_factor_split_levels <- function(node_id, split_variable, split_variable_type, split_value, train_data_df, rf_list){
+  # Treat the factor like an ordinal variable
+  if(is.null(rf_list$call$respect.unordered.factors)){
+    if(split_variable_type == "factor"){
+      split_variable_levels <- levels(unlist(train_data_df[,split_variable]))
+    }else{
+      # Character variables are automatically turned into factors in ranger()
+      split_variable_levels <- levels(factor(unlist(train_data_df[,split_variable])))
+    }
+  }
   # Treat the factor as nominal and check all 2-partitions for split
-  if(rf_list$call$respect.unordered.factors == "partition"){
+  else if(rf_list$call$respect.unordered.factors == "partition"){
     if(split_variable_type == "factor"){
       split_variable_levels <- levels(unlist(train_data_df[,split_variable]))
     }else{
@@ -22,7 +31,7 @@ get_factor_split_levels <- function(node_id, split_variable, split_variable_type
       split_variable_levels <- levels(factor(unlist(train_data_df[,split_variable])))
     }
     # All comma separated numbers go to the right child (see manual of "ranger")
-    right_node_numbers <- c(str_extract_all(split_value, "\\d", simplify = T)) %>% 
+    right_node_numbers <- c(str_extract_all(split_value, "\\d", simplify = T)) %>%
       as.numeric()
     right_node <- split_variable_levels[right_node_numbers]
     if(node_id %% 2 == 0){
@@ -30,15 +39,6 @@ get_factor_split_levels <- function(node_id, split_variable, split_variable_type
     }else{
       left_node <- setdiff(split_variable_levels, right_node)
       return(paste(left_node, collapse=","))
-    }
-  }
-  # Treat the factor like an ordinal variable 
-  else if(is.null(rf_list$call$respect.unordered.factors)){
-    if(split_variable_type == "factor"){
-      split_variable_levels <- levels(unlist(train_data_df[,split_variable]))
-    }else{ 
-      # Character variables are automatically turned into factors in ranger()
-      split_variable_levels <- levels(factor(unlist(train_data_df[,split_variable])))
     }
   }else if(rf_list$call$respect.unordered.factors == "ignore" |
            rf_list$call$respect.unordered.factors == FALSE){
@@ -54,7 +54,7 @@ get_factor_split_levels <- function(node_id, split_variable, split_variable_type
           rf_list$call$respect.unordered.factors == TRUE){
     split_variable_levels <- rf_list$forest$covariate.levels[split_variable] %>% unlist()
   }
-  
+
   # All labels below value go to the left for both options, in which the order is considered
   if(node_id %% 2 == 0){
     right_node <- split_variable_levels[ceiling(split_value):length(split_variable_levels)]
