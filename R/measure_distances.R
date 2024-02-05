@@ -6,7 +6,7 @@
 #'
 #' @param rf         Object of class \code{ranger} used with \code{write.forest = TRUE}.
 #' @param metric     Specification of the tree metric. Available are "splitting variables",
-#'                   "weighted splitting variables", "terminal nodes" and "prediction".
+#'                   "weighted splitting variables", "terminal nodes", "prediction" and "combined".
 #' @param test_data  Additional data set comparable to the data set \code{rf} was build on.
 #'
 #' @author Bjoern-Hergen Laabs, M.Sc.
@@ -30,8 +30,15 @@
 #' measure_distances(rf = rg.iris, metric = "weighted splitting variables")
 #' measure_distances(rf = rg.iris, metric = "terminal nodes", test_data = iris)
 #' measure_distances(rf = rg.iris, metric = "prediction", test_data = iris)
-#'
+#' measure_distances(rf = rg.iris, metric = "combined", test_data = iris)
+
+
+
+
+
 measure_distances <- function(rf, metric = "splitting variables", test_data = NULL){
+
+source(file.path("~/git_timbR/timbR/R", "measure_distances_functions.R"))
 
   ## Check inputs ----
   if (!checkmate::testClass(rf, "ranger")){
@@ -41,12 +48,12 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     stop("rf must be trained using write.forest = TRUE.")
   }
   if (!checkmate::testChoice(metric,
-                             choices = c("splitting variables", "weighted splitting variables", "terminal nodes", "prediction"))){
-    stop(paste("metric has to be from c('splitting variables', 'weighted splitting variables', 'terminal nodes', 'prediction')."))
+                             choices = c("splitting variables", "weighted splitting variables", "terminal nodes", "prediction", "combined"))){
+    stop(paste("metric has to be from c('splitting variables', 'weighted splitting variables', 'terminal nodes', 'prediction', 'combined')."))
   }
-  if (metric %in% c("terminal nodes", "prediction")){
+  if (metric %in% c("terminal nodes", "prediction", "combined")){
     if (checkmate::testNull(test_data)){
-      stop("You have to provide a test data set for distance measure by terminal nodes or prediction.")
+      stop("You have to provide a test data set for distance measure by terminal nodes, prediction or combined.")
     }
     if ("try-error" %in% class(try(predict(rf, data = test_data)))){
       stop("The provided test data set does not fit to the provided ranger object")
@@ -71,135 +78,39 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
 
   ## Calculation for d0 of Banerjee et al. (2012) ----
   if (metric == "splitting variables"){
-    ## Simplify for each tree which features were used
-    feature_usage <- lapply(X      = 1:rf$num.trees,
-                            FUN    = function(x){
-                              splitting_variables <- sort(unique(treeInfo(rf, x)$splitvarID))
-                              fu <- rep(0, num_features)
-                              fu[(splitting_variables+1)] <- 1
-                              fu
-                             })
-
-    ## Calculate standardized pair-wise distances
-    for (i in 1:rf$num.trees){
-      for (j in 1:rf$num.trees){
-        distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
-      }
-    }
+    distances <- splitting_variables_fun(rf)
   }
 
   ## Calculation weighted version of d0 ----
   if (metric == "weighted splitting variables"){
-    ## Calculate usage score for each variable
-    US <- lapply(1:rf$num.trees, function(i){
-      ## initialize levels for ith tree
-      split_level <- rep(1, length(rf$forest$split.varIDs[[i]]))
-
-      ## Extract child node IDs for ith tree
-      child.nodeIDs <- rf$forest$child.nodeIDs[[i]]
-
-      ## Extract split var IDs for ith tree
-      split.varIDs <- rf$forest$split.varIDs[[i]]
-
-      ## Child nodes get level of parent node + 1 ----
-      for (j in 1:length(rf$forest$split.varIDs[[i]])){
-        if (child.nodeIDs[[1]][j] != 0){
-          split_level[child.nodeIDs[[1]][j] + 1] <- split_level[j] + 1
-        }
-
-        if (child.nodeIDs[[2]][j] != 0){
-          split_level[child.nodeIDs[[2]][j] + 1] <- split_level[j] + 1
-        }
-      }
-
-      ## Usage score for each variable
-      US <- rep(0, rf$num.independent.variables)
-
-      US <- lapply(1:rf$num.independent.variables, function(j){
-        sum(1/(2^(split_level[split.varIDs == j] - 1))) / (max(split_level) - 1)
-      })
-
-      as.numeric(do.call("cbind", US))
-    })
-
-    US <- do.call("rbind", US)
-
-
-  distance <- lapply(1:rf$num.trees, function(x){
-                distance <- lapply(1:rf$num.trees, function(y){
-                              #1/rf$num.independent.variables * sum((US[x,] - US[y,])^2)
-                               sum((US[x,] - US[y,])^2)
-                              })
-
-                as.numeric(do.call("rbind", distance))
-  })
-
-  distances <- as.matrix(do.call("rbind", distance))
-
+    distances <- weighted_dist_fun(rf)
   }
 
   ## Calculation for d1 of Banerjee et al. (2012) ----
   if (metric == "terminal nodes"){
-    distances <- matrix(data = 0, nrow = rf$num.trees, ncol = rf$num.trees)
-
-    ## Initialize matrix for terminal nodes
-    term_node <- predict(rf, data = test_data, type = "terminalNodes")$predictions
-
-    ## Calculate if observations end in same terminal node for each tree
-    I <- list()
-
-    for (x in 1:rf$num.trees){
-      I[[x]] <- matrix(data = NA, nrow = nrow(test_data), ncol = nrow(test_data))
-
-      for (i in 1:nrow(test_data)){
-        for (j in 1:nrow(test_data)){
-          if (term_node[i,x] == term_node[j,x]){
-            I[[x]][i,j] <- 1
-          } else {
-            I[[x]][i,j] <- 0
-          }
-        }
-      }
-    }
-
-    ## Calculate distances
-    for (x in 1:rf$num.trees){
-      for (y in 1:rf$num.trees){
-        for (i in 1:(nrow(test_data)-1)){
-          for (j in (i+1):nrow(test_data)){
-            distances[x,y] <- distances[x,y] + abs(I[[x]][i,j] - I[[y]][i,j])
-          }
-        }
-      }
-    }
-
-    ## Normailze distances
-    distances <- distances / choose(nrow(test_data), 2)
+    distances <- terminal_nodes_fun(rf, test_data)
   }
 
   ## Calculation for d2 of Banerjee et al. (2012) ----
   if (metric == "prediction"){
-
-    ## Predict outcome for all test data
-    pred <- predict(rf, data = test_data, predict.all = TRUE)
-
-    ## Controll if outcome is factor
-    if (is.factor(rf$predictions)){
-      ## Calculate standardized pair-wise distances
-      for (i in 1:rf$num.trees){
-        for (j in 1:rf$num.trees){
-          distances[i,j] <- sum(pred$predictions[,i] != pred$predictions[,j])/nrow(test_data)
-        }
-      }
-    } else {
-      ## Calculate standardized pair-wise distances
-      for (i in 1:rf$num.trees){
-        for (j in 1:rf$num.trees){
-          distances[i,j] <- sum((pred$predictions[,i] - pred$predictions[,j])^2)/nrow(test_data)
-        }
-      }
-    }
+    distances <- prediction_dist_fun(rf, test_data)
   }
+
+  ## Calculation of a combined distance measure : weighted splitting variables and prediction
+  if (metric == "combined"){
+
+
+    # Calculation of th weighted and the prediction measure
+
+    w_dist <- weighted_dist_fun(rf)
+    p_dist <- prediction_dist_fun(rf, test_data)
+
+    # Calculation of the pairwise means
+
+    distances <- (w_dist + p_dist)/2
+
+  }
+
 
   ## Return distance matrix ----
   return(distances)
