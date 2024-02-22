@@ -179,6 +179,7 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   \usepackage[english]{babel}
   \usepackage{amsfonts}
   \definecolor{oceangreen_uzl}{RGB}{0,75,90}
+  \definecolor{imbs_orange}{RGB}{203,81,25}
   \begin{document}
   \begin{forest}
   for tree={draw,
