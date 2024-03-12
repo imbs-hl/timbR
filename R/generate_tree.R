@@ -43,7 +43,7 @@
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 1)
 #'
-generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = NULL, ...){
+generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = NULL, probs_quantiles = NULL, ...){
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -113,6 +113,14 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
   }
 
+  if(!is.null(probs_quantiles) & !is.numeric(probs_quantiles)){
+    stop("probs_quantiles must be NULL or numerical.")
+  }
+
+  if(!is.null(probs_quantiles) & any(probs_quantiles < 0 | probs_quantiles > 1)){
+    stop("probs_quantiles must consist of probabilities from 0 to 1.")
+  }
+
 
 
 
@@ -136,6 +144,51 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   ## Unlist split points
   split_points <- data.table::rbindlist(split_points)
   split_points <- unique(split_points)
+
+  # Use quantiles instead of all possible used split points for continuous variables
+  if(!is.null(probs_quantiles)){
+    # numbers of split points of all variables
+    number_split_points <- data.frame(table(split_points$split_var))
+
+    # add type of variables
+    type_variables <- rf$forest$covariate.levels
+    if(!is.null(type_variables)){
+      type_variables <- data.frame(variable = names(type_variables),
+                                   levels = sapply(type_variables, function(x) ifelse(is.null(x), NA, x)))
+
+      number_split_points <- left_join(number_split_points, type_variables, by = c("Var1" = "variable"))
+    }else{
+      number_split_points$type = NA
+    }
+
+    number_split_points <- number_split_points %>% mutate(use_quantiles = ifelse(Freq>length(probs_quantiles)& is.na(levels), 1, 0))
+
+    # check if any variable has more split points than wanted quantiles
+    if(any(number_split_points$use_quantiles == 1)){
+
+      ids_split <- as.character(number_split_points$Var1[number_split_points$use_quantiles == 1])
+
+      # calculate quantiles for new split points
+      new_split_points <- lapply(ids_split, function(x){
+        # calculate quantiles of split points
+        split_quantiles <- quantile(split_points$split_val[split_points$split_var == x],
+                                    probs = probs_quantiles)
+
+        # define new split points
+        data.frame(split_varID = split_points$split_varID[split_points$split_var == x][1],
+                   split_var = x,
+                   split_val = split_quantiles)
+      })
+
+      new_split_points <- bind_rows(new_split_points) %>% unique()
+
+      # remove old split points and add new ones
+      split_points <- split_points %>%
+        filter(!(split_var %in% ids_split)) %>%
+        bind_rows(new_split_points)
+    }
+  }
+
 
   if(!is.null(imp.num.var)){
     if(importance.mode & imp.num.var == "automatic"){
