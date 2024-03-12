@@ -43,7 +43,8 @@
 #' ## Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 1)
 #'
-generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = NULL, probs_quantiles = NULL, ...){
+generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname, importance.mode = FALSE, imp.num.var = NULL, probs_quantiles = NULL, epsilon = 0, ...){
+
   ## Check input ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
@@ -119,6 +120,15 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
   if(!is.null(probs_quantiles) & any(probs_quantiles < 0 | probs_quantiles > 1)){
     stop("probs_quantiles must consist of probabilities from 0 to 1.")
+  }
+
+  if(!is.numeric(epsilon) | is.na(epsilon) | is.null(epsilon)){
+    stop("epsilon most consist of a numerical value from 0 to 1.")
+  }
+  if(is.numeric(epsilon)){
+    if(epsilon < 0 | epsilon > 1){
+      stop("epsilon most consist of a numerical value from 0 to 1.")
+    }
   }
 
 
@@ -314,8 +324,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
   }
 
+  # Parameter to check, if adding nodes should be continued
+  # (better similarity or equal simularity with better prediction performance than epsilon)
+  continue <- TRUE
 
-  while(min_dist_tree < min_dist | min_dist == Inf){
+  while((min_dist_tree <= min_dist | min_dist == Inf) & continue){
     min_dist <- min_dist_tree
     max_node <- max(unlist(rf_rep$forest$child.nodeIDs[[rf_rep$num.trees]]))
     terminal_nodes <- which(treeInfo(rf_rep, rf_rep$num.trees)$terminal)
@@ -356,8 +369,14 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
         min_dist_trees <- which(mean_distances == min(mean_distances, na.rm = TRUE))
         opt_tree <- which(pred_error[min_dist_trees] == min(pred_error[min_dist_trees], na.rm = TRUE))
         opt_idx  <- min_dist_trees[opt_tree][1]
+        opt_error <- pred_error[opt_idx]
 
-        if(mean_distances[opt_idx] < min_dist){
+        # check if prediction is better than 1- epsilon
+        pred_check <- opt_error / min_pred_error < 1 - epsilon
+
+        if(mean_distances[opt_idx] < min_dist |
+           (mean_distances[opt_idx] == min_dist & pred_check)){
+
           ## Set new rf_rep
           node <- which(treeInfo(rf_rep, rf_rep$num.trees)$terminal != treeInfo(possible_rf_rep[[opt_idx]], possible_rf_rep[[opt_idx]]$num.trees)$terminal[1:nrow(treeInfo(rf_rep, rf_rep$num.trees))])
 
@@ -383,6 +402,10 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
           min_dist_tree <- mean_distances[opt_idx]
           min_pred_error <- pred_error[opt_idx]
+          continue <- TRUE
+        }else{
+          continue <- FALSE
+          # checken
         }
       }
     }
