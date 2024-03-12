@@ -1,7 +1,7 @@
 Package: timbR
 Type: Package
 Title: Tree interpretation methods based on ranger 
-Version: 2.0.1
+Version: 2.0.2
 Author: Bjoern-Hergen Laabs, M.Sc.
 Maintainer: Bjoern-Hergen Laabs, M.Sc. <b.laabs@uni-luebeck.de>
 Description: A collection of different methods to identify representative trees in random forests trained by ranger. 
