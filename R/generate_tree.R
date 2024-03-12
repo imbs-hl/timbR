@@ -17,7 +17,7 @@
 #' @param test_data         Additional data set comparable to the data set \code{rf} was build on.
 #' @param ...               Further parameters passed on to Boruta (e.g. pValue)
 #'
-#' @author Bjoern-Hergen Laabs, M.Sc.
+#' @author Dr. Bjoern-Hergen Laabs, Lea Louisa Kronziel, M.Sc.
 #' @return
 #'   \item{\code{rep.trees}}{\code{ranger} object containing the artificial most representative tree}
 #' @import ranger

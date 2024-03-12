@@ -13,7 +13,7 @@
 #' @param colors                  Vector with color names with one entry for each node, so for each row in tree_info_df
 #' @returns                       PDF document with plot
 #'
-#' @author Lea Louisa Kronziel
+#' @author Lea Louisa Kronziel, M.Sc.
 #'
 #' @import dplyr
 #' @import checkmate

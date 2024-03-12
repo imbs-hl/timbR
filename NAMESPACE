@@ -3,6 +3,7 @@
 export(measure_distances)
 export(plot_tree)
 export(select_trees)
+export(generate_tree)
 import(Boruta)
 import(checkmate)
 import(data.table)

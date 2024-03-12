@@ -9,7 +9,7 @@
 #'                   "weighted splitting variables", "terminal nodes" and "prediction".
 #' @param test_data  Additional data set comparable to the data set \code{rf} was build on.
 #'
-#' @author Bjoern-Hergen Laabs, M.Sc.
+#'@author Dr. Bjoern-Hergen Laabs
 #' @return
 #'   \item{\code{distances}}{matrix of size \code{num.trees}x\code{num.trees}}
 #' @export measure_distances

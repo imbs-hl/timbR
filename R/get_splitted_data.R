@@ -2,7 +2,8 @@
 #' @param tree_info_df Data frame containing information about the structure of the decision tree, which is built like a "treeInfo()" data frame from the package "ranger"
 #' @param inbag_data_df        Data frame of the inbag data with which the random forest was trained
 #' @param rf_list              Random forest, which is built like the one you get from ranger()
-#' @param tree_number             Number of the decision tree of the rf_list to be displayed
+#' @param tree_number          Number of the decision tree of the rf_list to be displayed
+#' @author Laabs, Lea Louisa Kronziel, M.Sc.
 #' @returns                    List containing for each node the inbag data reaching this node
 
 get_splitted_data <- function(tree_info_df, inbag_data_df, rf_list, tree_number){

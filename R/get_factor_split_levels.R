@@ -10,6 +10,7 @@
 #' @param split_value          Number(s) used for the split, for example the entry "splival" from the function treeInfo()
 #' @param train_data_df        Data frame of the training data with which the random forest was trained
 #' @param rf_list              Random forest, which is built like the one you get from ranger()
+#' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                    Character with levels passed from the parent node to the considered node
 
 get_factor_split_levels <- function(node_id, split_variable, split_variable_type, split_value, train_data_df, rf_list){
