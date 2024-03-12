@@ -36,6 +36,12 @@ Improves speed. Variable importance values have to be included in ranger object.
 variable selection algorithm from Kursa et al. (2010) is used (could be time consuming).
 Insert a numeric value, if you want to define the number on your own.}
 
+\item{probs_quantiles}{Vector with values from 0 to 1 or NULL. Possibility to choose quantiles as split points
+(e.g. c(0.25, 0.5, 0.75)) for continuous variables, otherwise could be very time-consuming.}
+
+\item{epsilon}{The creation of the tree is continued even if the similarity stays the same if the percentage of
+the prediction improves by 1 - epsilon.}
+
 \item{...}{Further parameters passed on to Boruta (e.g. pValue)}
 }
 \value{
