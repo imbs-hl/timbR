@@ -325,7 +325,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   }
 
   # Parameter to check, if adding nodes should be continued
-  # (better similarity or equal simularity with better prediction performance than epsilon)
+  # (better similarity or equal simularity with better prediction performance than 1 - epsilon)
   continue <- TRUE
 
   while((min_dist_tree <= min_dist | min_dist == Inf) & continue){
