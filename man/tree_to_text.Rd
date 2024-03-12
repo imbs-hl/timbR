@@ -14,7 +14,8 @@ tree_to_text(
   show_sample_size,
   show_prediction_nodes,
   vert_sep,
-  hor_sep
+  hor_sep,
+  colors
 )
 }
 \arguments{
@@ -43,4 +44,7 @@ Character pasted Latex code for the plot with the Latex package "forest"
 }
 \description{
 Get latex code in the format of the package "forest" for the plot of the decision tree
+}
+\author{
+Lea Louisa Kronziel, M.Sc.
 }

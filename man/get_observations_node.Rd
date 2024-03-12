@@ -29,3 +29,6 @@ Character with the number of observations reaching this node
 \description{
 Get number of observations of the inbag data that reach respective node
 }
+\author{
+Lea Louisa Kronziel, M.Sc.
+}

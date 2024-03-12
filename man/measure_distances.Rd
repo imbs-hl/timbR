@@ -38,5 +38,5 @@ measure_distances(rf = rg.iris, metric = "prediction", test_data = iris)
 
 }
 \author{
-Bjoern-Hergen Laabs, M.Sc.
+Dr. Bjoern-Hergen Laabs
 }

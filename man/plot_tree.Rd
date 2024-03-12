@@ -15,7 +15,8 @@ plot_tree(
   vert_sep = 25,
   hor_sep = 25,
   work_dir,
-  plot_name
+  plot_name,
+  colors = NULL
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ plot_tree(
 \item{work_dir}{Path where plot should be saved}
 
 \item{plot_name}{Plot name}
+
+\item{colors}{Vector with color names with one entry for each node, so for each row in tree_info_df}
 }
 \value{
 PDF document with plot
@@ -64,8 +67,7 @@ rf_iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
 treeinfo_iris <- treeInfo(rf_iris)
 ## Plot the first tree
 plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, rf_list = rf_iris, dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
-
 }
 \author{
-Lea Louisa Kronziel
+Lea Louisa Kronziel, M.Sc.
 }

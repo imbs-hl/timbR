@@ -3,8 +3,8 @@
 \name{get_factor_split_levels}
 \alias{get_factor_split_levels}
 \title{Get split criterion (levels) for factor or character variables
-Character variables are automatically turned into factors in ranger() from the package "ranger"
-Considers the three possibilities to treat and split factors (Parameter "respect.unordered.factors" in ranger()): 
+Character variables are automatically turned into factors in function ranger() from the package "ranger"
+Considers the three possibilities to treat and split factors (Parameter "respect.unordered.factors" in ranger()):
 - Treat the factor like an ordinal variable ("none", "NULL" or "FALSE" in ranger())
 - Treat the factor as nominal and check all 2-partitions for split ("partition")
 - Treat factor as ordinal and determine optimal order of levels for the random forest ("order", "TRUE" in ranger())}
@@ -36,9 +36,12 @@ Character with levels passed from the parent node to the considered node
 }
 \description{
 Get split criterion (levels) for factor or character variables
-Character variables are automatically turned into factors in ranger() from the package "ranger"
-Considers the three possibilities to treat and split factors (Parameter "respect.unordered.factors" in ranger()): 
+Character variables are automatically turned into factors in function ranger() from the package "ranger"
+Considers the three possibilities to treat and split factors (Parameter "respect.unordered.factors" in ranger()):
 - Treat the factor like an ordinal variable ("none", "NULL" or "FALSE" in ranger())
 - Treat the factor as nominal and check all 2-partitions for split ("partition")
 - Treat factor as ordinal and determine optimal order of levels for the random forest ("order", "TRUE" in ranger())
+}
+\author{
+Lea Louisa Kronziel, M.Sc.
 }

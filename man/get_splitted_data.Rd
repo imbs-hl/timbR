@@ -21,3 +21,6 @@ List containing for each node the inbag data reaching this node
 \description{
 Get for each node which observations of the inbag data reach it
 }
+\author{
+Laabs, Lea Louisa Kronziel, M.Sc.
+}
