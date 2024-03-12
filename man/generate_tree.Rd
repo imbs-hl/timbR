@@ -12,6 +12,8 @@ generate_tree(
   dependent_varname,
   importance.mode = FALSE,
   imp.num.var = NULL,
+  probs_quantiles = NULL,
+  epsilon = 0,
   ...
 )
 }
@@ -61,5 +63,5 @@ rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_da
 
 }
 \author{
-Bjoern-Hergen Laabs, M.Sc.
+Dr. Bjoern-Hergen Laabs, Lea Louisa Kronziel, M.Sc.
 }

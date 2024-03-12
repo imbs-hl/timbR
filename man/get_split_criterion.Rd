@@ -21,3 +21,6 @@ Character with levels or values passed from the parent node to the considered no
 \description{
 Get split criterion (levels) for factor, character or numerical variables
 }
+\author{
+Lea Louisa Kronziel, M.Sc.
+}

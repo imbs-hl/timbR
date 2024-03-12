@@ -32,3 +32,6 @@ Character with the prediction of the node
 \description{
 Get prediction of the node
 }
+\author{
+Lea Louisa Kronziel, M.Sc.
+}

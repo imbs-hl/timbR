@@ -37,5 +37,5 @@ rg.iris.rep <- select_trees(rf = rg.iris, num.trees = 5, distance.matrix = dista
 
 }
 \author{
-Bjoern-Hergen Laabs, M.Sc.
+Dr. Bjoern-Hergen Laabs
 }
