@@ -6,13 +6,14 @@
 #' @param dependent_var           Name of the column of the dependent variable in training data
 #' @param show_sample_size        Option to display percentage of observations that reach nodes during training, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
 #' @param show_prediction_nodes   Option to display prediction in all nodes, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
-#' @param vert_sep                   Vertical spacing of nodes in mm (parameter from Latex package "forest")
-#' @param hor_sep                   Horizontal spacing of nodes in mm (parameter from Latex package "forest")
+#' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
+#' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @param work_dir                Path where plot should be saved
 #' @param plot_name               Plot name
+#' @param colors                  Vector with color names with one entry for each node, so for each row in tree_info_df
 #' @returns                       PDF document with plot
 #'
-#' @author Lea Louisa Kronziel
+#' @author Lea Louisa Kronziel, M.Sc.
 #'
 #' @import dplyr
 #' @import checkmate
@@ -39,12 +40,12 @@
 #' treeinfo_iris <- treeInfo(rf_iris)
 #' ## Plot the first tree
 #' plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, rf_list = rf_iris, dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
-#'
+
 
 plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dependent_var,
-                                     show_sample_size = FALSE, show_prediction_nodes = FALSE,
-                                     vert_sep = 25, hor_sep = 25,
-                                     work_dir, plot_name){
+                      show_sample_size = FALSE, show_prediction_nodes = FALSE,
+                      vert_sep = 25, hor_sep = 25,
+                      work_dir, plot_name, colors = NULL){
 
   ## Check inputs ----
   # any input is NULL
@@ -148,6 +149,12 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   if (plot_name == ""){
     stop("Please enter a name for the plot_name.")
   }
+
+  # colors
+  if (!is.null(colors) & length(colors)!= nrow(tree_info_df)){
+    stop("Please insert a vector with a color for each node including terminal nodes ( = number of rows in tree_info_df).")
+  }
+
   ## Plot tree ----
 
   # Generate Latex code for the plot of the tree
@@ -161,7 +168,8 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
                                    show_sample_size = show_sample_size,
                                    show_prediction_nodes = show_prediction_nodes,
                                    vert_sep = vert_sep,
-                                   hor_sep = hor_sep),
+                                   hor_sep = hor_sep,
+                                   colors = colors),
                       "]")
 
   # Code for the Latex document
@@ -170,6 +178,8 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   \usepackage[edges]{forest}
   \usepackage[english]{babel}
   \usepackage{amsfonts}
+  \definecolor{oceangreen_uzl}{RGB}{0,75,90}
+  \definecolor{imbs_orange}{RGB}{203,81,25}
   \begin{document}
   \begin{forest}
   for tree={draw,
@@ -194,4 +204,7 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
 
   # save plot as PDF document
   pdflatex(temp_tex_path, pdf_file = file.path(work_dir, paste0(plot_name, ".pdf")), clean = TRUE)
+
+  # print where plot is saved
+  print(paste0("Your plot is saved here: ", work_dir, paste0(plot_name, ".pdf")))
 }

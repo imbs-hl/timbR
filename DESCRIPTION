@@ -1,14 +1,14 @@
 Package: timbR
 Type: Package
 Title: Tree interpretation methods based on ranger 
-Version: 1.1.0
+Version: 2.0.0
 Author: Bjoern-Hergen Laabs, M.Sc.
 Maintainer: Bjoern-Hergen Laabs, M.Sc. <b.laabs@uni-luebeck.de>
 Description: A collection of different methods to identify representative trees in random forests trained by ranger. 
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Imports: ranger, checkmate, dplyr, data.table, knitr, tinytex
+Imports: ranger, checkmate, dplyr, data.table, knitr, tinytex, Boruta
 Depends: R (>= 3.1)
 Suggests: testthat
 RoxygenNote: 7.2.3

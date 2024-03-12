@@ -9,7 +9,7 @@
 #'                   "weighted splitting variables", "terminal nodes" and "prediction".
 #' @param test_data  Additional data set comparable to the data set \code{rf} was build on.
 #'
-#' @author Bjoern-Hergen Laabs, M.Sc.
+#'@author Dr. Bjoern-Hergen Laabs
 #' @return
 #'   \item{\code{distances}}{matrix of size \code{num.trees}x\code{num.trees}}
 #' @export measure_distances
@@ -78,7 +78,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
                               fu <- rep(0, num_features)
                               fu[(splitting_variables+1)] <- 1
                               fu
-                             })
+                            })
 
     ## Calculate standardized pair-wise distances
     for (i in 1:rf$num.trees){
@@ -116,7 +116,13 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
       US <- rep(0, rf$num.independent.variables)
 
       US <- lapply(1:rf$num.independent.variables, function(j){
-        sum(1/(2^(split_level[split.varIDs == j] - 1))) / (max(split_level) - 1)
+        if(j-1==0){
+          # root node and terminal nodes have ID 0
+          terminal_node <- treeInfo(rf, tree = i)$terminal
+          sum(1/(2^(split_level[(split.varIDs == (j-1) & !terminal_node)] - 1))) / (max(split_level) - 1)
+        }else{
+          sum(1/(2^(split_level[split.varIDs == (j-1)] - 1))) / (max(split_level) - 1)
+        }
       })
 
       as.numeric(do.call("cbind", US))
@@ -125,16 +131,16 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     US <- do.call("rbind", US)
 
 
-  distance <- lapply(1:rf$num.trees, function(x){
-                distance <- lapply(1:rf$num.trees, function(y){
-                              #1/rf$num.independent.variables * sum((US[x,] - US[y,])^2)
-                               sum((US[x,] - US[y,])^2)
-                              })
+    distance <- lapply(1:rf$num.trees, function(x){
+      distance <- lapply(1:rf$num.trees, function(y){
+        #1/rf$num.independent.variables * sum((US[x,] - US[y,])^2)
+        sum((US[x,] - US[y,])^2)
+      })
 
-                as.numeric(do.call("rbind", distance))
-  })
+      as.numeric(do.call("rbind", distance))
+    })
 
-  distances <- as.matrix(do.call("rbind", distance))
+    distances <- as.matrix(do.call("rbind", distance))
 
   }
 
