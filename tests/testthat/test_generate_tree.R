@@ -45,6 +45,11 @@ test_that("Test incorrect inputs", {
   expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = "abc"))
   expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = -1))
   expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 123))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", probs_quantiles = 123))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", probs_quantiles = "123"))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", probs_quantiles = c(0,1,1.2)))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", epsilon = 123))
+  expect_error(generate_tree(rf = rf, metric = "splitting variables", train_data = iris, dependent_varname = "Species", epsilon = "123"))
 })
 
 ## Test output
