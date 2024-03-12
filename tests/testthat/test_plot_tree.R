@@ -265,6 +265,12 @@ test_that("Test input", {
                          show_sample_size = FALSE, show_prediction_nodes = FALSE,
                          vert_sep = 25, hor_sep = 25,
                          work_dir = work_dir, plot_name = 123))
+  # colors
+  expect_error(plot_tree(tree_info_df = class_info, train_data_df = class_data, rf_list = class_rf,
+                         tree_number = 1, dependent_var = "Species",
+                         show_sample_size = FALSE, show_prediction_nodes = FALSE,
+                         vert_sep = 25, hor_sep = 25,
+                         work_dir = work_dir, plot_name = "abc", colors = "red"))
 })
 
 

@@ -12,7 +12,7 @@
 #' @returns                       Character pasted Latex code for the plot with the Latex package "forest"
 tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_number, dependent_var, 
                          show_sample_size, show_prediction_nodes,
-                         vert_sep, hor_sep){
+                         vert_sep, hor_sep, colors){
   
   l_sep <- paste0(vert_sep, "mm")
   s_sep <- paste0(hor_sep, "mm")
@@ -21,6 +21,10 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
                         paste0("\\\\",
                                get_observations_node(tree_info_df, train_data_df, rf_list, tree_number, node_id)),
                         "")
+  
+  color_node <- ifelse(is.null(colors), 
+                   "white", 
+                   colors[node_id+1])
   
   if(tree_info_df$terminal[node_id+1]){
     prediction_nodes <- ifelse(show_prediction_nodes,
@@ -33,6 +37,7 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
                    "},", 
                    "align=center,",
                    "node options={rounded corners},",
+                   paste("fill=", color_node), ",",
                    paste("l=", l_sep),",",
                    paste("s sep=", s_sep),",",
                    "edge label={node[midway, above,font=\\scriptsize]{", 
@@ -51,17 +56,18 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
                  "align=center,",
                  paste("l=", l_sep),",",
                  paste("s sep=", s_sep),",",
+                 paste("fill=", color_node), ",",
                  "edge label={node[midway,above,font=\\scriptsize]{", 
                  get_split_criterion(tree_info_df, node_id, train_data_df, rf_list), "}}",
                  "[",
                  tree_to_text(tree_info_df$leftChild[node_id+1], tree_info_df, train_data_df, rf_list, tree_number, dependent_var,
                               show_sample_size, show_prediction_nodes,
-                              vert_sep, hor_sep), 
+                              vert_sep, hor_sep, colors), 
                  "]",
                  "[",
                  tree_to_text(tree_info_df$rightChild[node_id+1], tree_info_df, train_data_df, rf_list, tree_number, dependent_var, 
                               show_sample_size, show_prediction_nodes,
-                              vert_sep, hor_sep),
+                              vert_sep, hor_sep, colors),
                  "]")
   return(node)
 }
