@@ -8,7 +8,7 @@
 #' @param num.trees       Number of trees to be selected from \code{rf}.
 #' @param distance.matrix Add matrix of precalculated distances.
 #'
-#' @author Bjoern-Hergen Laabs, M.Sc.
+#' @author Dr. Bjoern-Hergen Laabs
 #' @return
 #'   \item{\code{rep.trees}}{\code{ranger} object containing the most representative trees}
 #' @export select_trees
