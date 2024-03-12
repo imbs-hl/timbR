@@ -3,6 +3,7 @@
 export(measure_distances)
 export(plot_tree)
 export(select_trees)
+import(Boruta)
 import(checkmate)
 import(data.table)
 import(dplyr)
