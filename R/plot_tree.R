@@ -206,5 +206,5 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   pdflatex(temp_tex_path, pdf_file = file.path(work_dir, paste0(plot_name, ".pdf")), clean = TRUE)
 
   # print where plot is saved
-  print(paste0("Your plot is saved here: ", work_dir, paste0(plot_name, ".pdf")))
+  print(paste0("Your plot is saved here: ", work_dir, paste0("/", plot_name, ".pdf")))
 }
