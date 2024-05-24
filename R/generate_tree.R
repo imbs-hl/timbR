@@ -1,6 +1,6 @@
 #' \code{generate_tree} uses pair-wise dissimilarity of trees in a random
-#' forest trained with \code{ranger} to generate an artificail most representative tree
-#' which is not part aof the original ensemble
+#' forest trained with \code{ranger} to generate an artificial most representative tree
+#' which is not part of the original ensemble
 #'
 #' @title Generate most representative tree for a random forest
 #'
