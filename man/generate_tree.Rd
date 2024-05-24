@@ -12,6 +12,8 @@ generate_tree(
   dependent_varname,
   importance.mode = FALSE,
   imp.num.var = NULL,
+  probs_quantiles = NULL,
+  epsilon = 0,
   ...
 )
 }
@@ -34,6 +36,12 @@ Improves speed. Variable importance values have to be included in ranger object.
 variable selection algorithm from Kursa et al. (2010) is used (could be time consuming).
 Insert a numeric value, if you want to define the number on your own.}
 
+\item{probs_quantiles}{Vector with values from 0 to 1 or NULL. Possibility to choose quantiles as split points
+(e.g. c(0.25, 0.5, 0.75)) for continuous variables, otherwise could be very time-consuming.}
+
+\item{epsilon}{The creation of the tree is continued even if the similarity stays the same if the percentage of
+the prediction improves by 1 - epsilon.}
+
 \item{...}{Further parameters passed on to Boruta (e.g. pValue)}
 }
 \value{
@@ -41,8 +49,8 @@ Insert a numeric value, if you want to define the number on your own.}
 }
 \description{
 \code{generate_tree} uses pair-wise dissimilarity of trees in a random
-forest trained with \code{ranger} to generate an artificail most representative tree
-which is not part aof the original ensemble
+forest trained with \code{ranger} to generate an artificial most representative tree
+which is not part of the original ensemble
 }
 \examples{
 require(ranger)
