@@ -33,6 +33,8 @@
 #' ## Specify the path to the folder where the plot should be saved
 #' work_dir <- getwd()
 #'
+#' data(iris)
+#'
 #' set.seed(12345)
 #' ## Train random forest with ranger
 #' rf_iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
