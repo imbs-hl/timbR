@@ -135,7 +135,9 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
   }
 
-
+  if(rf$treetype == "Classification" & is.numeric(rf$predictions)){
+    stop("Your classification ranger has to be trained on a factor as outcome.")
+  }
 
 
   ## Extract split points ----
@@ -175,7 +177,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       number_split_points$type = NA
     }
 
-    number_split_points <- number_split_points %>% mutate(use_quantiles = ifelse(Freq>length(probs_quantiles)& is.na(levels), 1, 0))
+    number_split_points <- number_split_points %>% mutate(use_quantiles = ifelse(Freq>length(probs_quantiles)& is.na(type), 1, 0))
 
     # check if any variable has more split points than wanted quantiles
     if(any(number_split_points$use_quantiles == 1)){
@@ -329,7 +331,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   }
 
   # Parameter to check, if adding nodes should be continued
-  # (better similarity or equal simularity with better prediction performance than 1 - epsilon)
+  # (better similarity or equal similarity with better prediction performance than 1 - epsilon)
   continue <- TRUE
 
   while((min_dist_tree <= min_dist | min_dist == Inf) & continue){
