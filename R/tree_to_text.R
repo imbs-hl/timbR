@@ -9,6 +9,7 @@
 #' @param show_prediction_nodes   Option to display prediction in all nodes (TRUE or FALSE)
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
+#' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                       Character pasted Latex code for the plot with the Latex package "forest"
 tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_number, dependent_var,
                          show_sample_size, show_prediction_nodes,
@@ -51,6 +52,7 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
 
   node <- paste0("{", gsub("_", "\\\\_", tree_info_df$splitvarName[node_id+1]),
                  gsub("_", "\\\\_", prediction_nodes),
+
                  sample_size,
                  "},",
                  "align=center,",

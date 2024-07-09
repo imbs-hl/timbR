@@ -8,7 +8,7 @@
 #' @param num.trees       Number of trees to be selected from \code{rf}.
 #' @param distance.matrix Add matrix of precalculated distances.
 #'
-#' @author Bjoern-Hergen Laabs, M.Sc.
+#' @author Dr. Bjoern-Hergen Laabs
 #' @return
 #'   \item{\code{rep.trees}}{\code{ranger} object containing the most representative trees}
 #' @export select_trees
@@ -48,9 +48,16 @@ select_trees <- function(rf, num.trees = NULL, distance.matrix = NULL){
   if(sum(dim(distance.matrix) == rf$num.trees) != 2){
     stop("Dimensions of distance matrix do not fit to ranger object.")
   }
+  ## if rf consists of only one tree, return the tree
+  if(rf$num.trees==1 & num.trees == 1){
+    warning("Your RF consists of only one tree, your RF is returned")
+    return(rf)
+  }
   if(num.trees > rf$num.trees){
     stop("You can not select more representative trees than trees in the ranger object.")
   }
+
+
 
   ## Calculate distance score for each tree ----
   dist_score <- rowSums(distance.matrix)

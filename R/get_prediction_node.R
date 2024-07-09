@@ -5,6 +5,7 @@
 #' @param dependent_var        Name of the column of the dependent variable in training data
 #' @param tree_number          Number of the decision tree of the rf_list to be displayed
 #' @param node_id              Node ID of the node whose parent ID is to be determined
+#' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                    Character with the prediction of the node
 
 get_prediction_node <- function(tree_info_df, train_data_df, rf_list, dependent_var, tree_number, node_id){
