@@ -33,6 +33,8 @@
 #' ## Specify the path to the folder where the plot should be saved
 #' work_dir <- getwd()
 #'
+#' data(iris)
+#'
 #' set.seed(12345)
 #' ## Train random forest with ranger
 #' rf_iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
@@ -206,5 +208,5 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   pdflatex(temp_tex_path, pdf_file = file.path(work_dir, paste0(plot_name, ".pdf")), clean = TRUE)
 
   # print where plot is saved
-  print(paste0("Your plot is saved here: ", work_dir, paste0(plot_name, ".pdf")))
+  print(paste0("Your plot is saved here: ", work_dir, paste0("/", plot_name, ".pdf")))
 }

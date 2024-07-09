@@ -32,7 +32,7 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
                                get_prediction_terminal_node(tree_info_df, train_data_df, rf_list, dependent_var, tree_number, node_id),
                                "")
     leaf <- paste0("{",
-                   tree_info_df$prediction[node_id+1],
+                   gsub("_", "\\\\_", tree_info_df$prediction[node_id+1]),
                    prediction_nodes,
                    sample_size,
                    "},",
@@ -50,8 +50,9 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, rf_list, tree_num
                                     get_prediction_node(tree_info_df, train_data_df, rf_list, dependent_var, tree_number, node_id)),
                              "")
 
-  node <- paste0("{", tree_info_df$splitvarName[node_id+1],
-                 prediction_nodes,
+  node <- paste0("{", gsub("_", "\\\\_", tree_info_df$splitvarName[node_id+1]),
+                 gsub("_", "\\\\_", prediction_nodes),
+
                  sample_size,
                  "},",
                  "align=center,",
