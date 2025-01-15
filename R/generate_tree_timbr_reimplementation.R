@@ -227,7 +227,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
     type_variables <- rf$forest$covariate.levels
     if(!is.null(type_variables)){
       type_variables <- data.frame(variable = names(type_variables),
-                                   levels = sapply(type_variables, function(x) ifelse(is.null(x), NA, x)))
+                                   type = sapply(type_variables, function(x) ifelse(is.null(x), NA, x)))
 
       number_split_points <- left_join(number_split_points, type_variables, by = c("Var1" = "variable"))
     }else{
