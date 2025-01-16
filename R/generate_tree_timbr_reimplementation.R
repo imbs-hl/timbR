@@ -19,7 +19,7 @@
 #'                          (e.g. c(0.25, 0.5, 0.75)) for continuous variables, otherwise could be very time-consuming.
 #' @param epsilon           The creation of the tree is continued even if the similarity stays the same if the percentage of
 #'                          the prediction improves by 1 - epsilon.
-#' @param min.bucket        Minimal terminal node size. No nodes with less obersavtions smaller than this value can occur. Improves speed. A stump is always created that may violate this.
+#' @param min.bucket        Minimal terminal node size. No nodes with less obersavtions smaller than this value can occur. Improves speed.
 #' @param num.splits        The generated tree consists of a maximum of num.splits splits. Improves speed.
 #' @param ...               Further parameters passed on to Boruta (e.g. pValue)
 #'
@@ -49,6 +49,21 @@
 #' # Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree_reimplementation(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 2, min.bucket = 25)
 #'
+
+library(dplyr)
+library(ranger)
+# Train random forest with ranger
+rf.iris <- ranger(Species ~ .,
+                  data = iris,
+                  write.forest=TRUE,
+                  num.trees = 10,
+                  importance = "permutation"
+)
+
+# # Calculate pair-wise distances for all trees
+# rep_tree <- generate_tree_reimplementation(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 2, min.bucket = 25)
+#
+
 generate_tree_reimplementation <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname,
                                            importance.mode = FALSE, imp.num.var = NULL, probs_quantiles = NULL, epsilon = 0,
                                            min.bucket = 0, num.splits = NULL, ...){
@@ -290,6 +305,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
   stumps <- list()
   dist_score_stump <- c()
   node_data_list <- list()
+  keep_stump <- c()
   for(i in 1:nrow(split_points)){
     split.varIDs <- split_points[i,"split_varID"]
     split_value <- split_points[i,"split_value"]
@@ -305,6 +321,13 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
     # Add prediction
     # Get data of left and right node
     node_data <- seperate_data_nodes(split_var = split.var, split_value = split_value, node_data = train_data)
+
+    # Check min.bucket size TODO
+    if(nrow(node_data$left) < min.bucket | nrow(node_data$right) < min.bucket){
+      keep_stump[i] <- FALSE
+    }else{
+      keep_stump[i] <- TRUE
+    }
 
     if(rf$treetype == "Classification"){
       prediction <- names(which.max(table(node_data$left[,dependent_varname])))
@@ -324,6 +347,16 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
     ranger_tree$forest <- tree
     distance_values <- suppressMessages(get_distance_values(ranger_tree, metric = metric, test_data = test_data))
     dist_score_stump[i] <- get_distance_score(rf, dist_val_rf = dist_val_rf, dist_val_tree = distance_values, metric = metric, test_data = test_data)
+  }
+
+  # Check min.bucket size
+  if(all(!keep_stump)){
+    stop("min.bucket value is too high for your train data set")
+  }else{
+    node_data_list <- node_data_list[keep_stump]
+    stumps <- stumps[keep_stump]
+    dist_score_stump <- dist_score_stump[keep_stump]
+    split_points <- split_points[keep_stump,]
   }
 
   # Find stump with minimal distance
