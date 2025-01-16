@@ -50,19 +50,6 @@
 #' rep_tree <- generate_tree_reimplementation(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 2, min.bucket = 25)
 #'
 
-library(dplyr)
-library(ranger)
-# Train random forest with ranger
-rf.iris <- ranger(Species ~ .,
-                  data = iris,
-                  write.forest=TRUE,
-                  num.trees = 10,
-                  importance = "permutation"
-)
-
-# # Calculate pair-wise distances for all trees
-# rep_tree <- generate_tree_reimplementation(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 2, min.bucket = 25)
-#
 
 generate_tree_reimplementation <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname,
                                            importance.mode = FALSE, imp.num.var = NULL, probs_quantiles = NULL, epsilon = 0,
