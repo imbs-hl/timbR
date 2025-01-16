@@ -309,7 +309,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
     # Get data of left and right node
     node_data <- seperate_data_nodes(split_var = split.var, split_value = split_value, node_data = train_data)
 
-    # Check min.bucket size TODO
+    # Check min.bucket size
     if(nrow(node_data$left) < min.bucket | nrow(node_data$right) < min.bucket){
       keep_stump[i] <- FALSE
     }else{
