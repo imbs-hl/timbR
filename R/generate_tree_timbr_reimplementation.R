@@ -548,6 +548,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
 
       # Save stump with minimal dist and smallest error as art
       art <- possible_trees[[ids_minimal_dist]]
+      ranger_temp$forest <- art
       # Save accuracy of selected stump
       error_tree <- min(error_trees)
     }else{
