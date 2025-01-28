@@ -86,6 +86,16 @@ test_that("Test input", {
                          show_sample_size = FALSE, show_prediction_nodes = FALSE,
                          vert_sep = 25, hor_sep = 25,
                          work_dir = work_dir, plot_name = NULL))
+  expect_error(plot_tree(tree_info_df = class_info_inbag, train_data_df = class_data, rf_list = class_rf,
+                         tree_number = 1, dependent_var = "Species",
+                         show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = TRUE,,
+                         vert_sep = 25, hor_sep = 25,
+                         work_dir = work_dir, plot_name = NULL))
+  expect_error(plot_tree(tree_info_df = regr_info_inbag, train_data_df = regr_data, rf_list = regr_rf,
+                         tree_number = 1, dependent_var = "Employed",
+                         show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = TRUE,
+                         vert_sep = 25, hor_sep = 25,
+                         work_dir = work_dir, plot_name = "abc"))
   # NA
   expect_error(plot_tree(tree_info_df = NA, train_data_df = class_data, rf_list = class_rf,
                          tree_number = 1, dependent_var = "Species",
