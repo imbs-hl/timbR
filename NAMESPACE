@@ -2,6 +2,8 @@
 
 export(generate_tree)
 export(generate_tree_reimplementation)
+export(get_calibrated_prediction_regression)
+export(get_calibrated_prediction_regression_mondrian)
 export(measure_distances)
 export(measure_distances_reimplementation)
 export(plot_tree)

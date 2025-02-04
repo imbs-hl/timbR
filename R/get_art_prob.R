@@ -5,35 +5,20 @@
 #' @param train_data     Additional data set comparable to the data set \code{rf} was build on. Only needed for metric "prediction".
 #'
 #' @author Lea Louisa Kronziel, M.sc.
-#' @return
-#'   \item{\code{}}{ranger object predicting probabilities instead of classes}
+#' @return ranger object predicting probabilities instead of classes
 #' @import ranger
 #' @import dplyr
 #' @import checkmate
 #'
-#' @examples
-#' require(ranger)
-#' require(timbR)
-#' require(dplyr)
-#'
-#' set.seed(12345)
-#' # Train random forest with ranger
-#' rf.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
-#'
-#' # generate art
-#' art <- generate_tree_reimplementation(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", min.bucket = 25)
-#'
-#'# transform classification tree to probability predictor
-#' probability_art <- get_art_prob(art = art, train_data = iris)
-#'
+
 
 
 get_art_prob <- function(art, train_data){
   ## Check input ----
-  if (!checkmate::testClass(rf, "ranger")){
-    stop("rf must be of class ranger")
+  if (!checkmate::testClass(art, "ranger")){
+    stop("art must be of class ranger")
   }
-  if ((rf$treetype %in% c("Classification") == FALSE)){
+  if ((art$treetype %in% c("Classification") == FALSE)){
     stop("Treetyp not supported. Please use a classification tree.")
   }
 
@@ -41,7 +26,7 @@ get_art_prob <- function(art, train_data){
     stop("You have to provide a train data set.")
   }
 
-  if ("try-error" %in% class(try(predict(rf, data = train_data), silent = TRUE))){
+  if ("try-error" %in% class(try(predict(art, data = train_data), silent = TRUE))){
     stop("The provided train data set does not fit to the provided ranger object")
   }
 
@@ -63,7 +48,7 @@ get_art_prob <- function(art, train_data){
   treeinfo_art <- treeInfo(art)
 
   # observations of train data that are passed to each node
-  splitted_data_list <- timbR:::get_splitted_data(tree_info_df = treeinfo_art,
+  splitted_data_list <- get_splitted_data(tree_info_df = treeinfo_art,
                                                   inbag_data_df = train_data,
                                                   rf_list = art,
                                                   tree_number = 1)

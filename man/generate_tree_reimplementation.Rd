@@ -44,7 +44,7 @@ Insert a numeric value, if you want to define the number on your own.}
 \item{epsilon}{The creation of the tree is continued even if the similarity stays the same if the percentage of
 the prediction improves by 1 - epsilon.}
 
-\item{min.bucket}{Minimal terminal node size. No nodes with less obersavtions smaller than this value can occur. Improves speed. A stump is always created that may violate this.}
+\item{min.bucket}{Minimal terminal node size. No nodes with less obersavtions smaller than this value can occur. Improves speed.}
 
 \item{num.splits}{The generated tree consists of a maximum of num.splits splits. Improves speed.}
 
