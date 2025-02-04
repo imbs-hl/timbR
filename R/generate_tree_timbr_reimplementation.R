@@ -286,7 +286,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
 
   # ------
   # Get distance values for trees in RF (trees as columns)
-  dist_val_rf <- get_distance_values(rf, metric = metric, test_data = test_data)
+  dist_val_rf <- suppressMessages(get_distance_values(rf, metric = metric, test_data = test_data))
 
   # Build all possible stumps
   stumps <- list()
@@ -333,7 +333,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
     stumps[[i]] <- tree
     ranger_tree$forest <- tree
     distance_values <- suppressMessages(get_distance_values(ranger_tree, metric = metric, test_data = test_data))
-    dist_score_stump[i] <- get_distance_score(rf, dist_val_rf = dist_val_rf, dist_val_tree = distance_values, metric = metric, test_data = test_data)
+    dist_score_stump[i] <- suppressMessages(get_distance_score(rf, dist_val_rf = dist_val_rf, dist_val_tree = distance_values, metric = metric, test_data = test_data))
   }
 
   # Check min.bucket size
@@ -509,7 +509,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
           # Save distance to RF
           ranger_temp$forest <- tree
           distance_values <- suppressMessages(get_distance_values(ranger_temp, metric = metric, test_data = test_data))
-          dist_score_trees <- c(dist_score_trees, get_distance_score(rf, dist_val_rf = dist_val_rf, dist_val_tree = distance_values, metric = metric, test_data = test_data))
+          dist_score_trees <- c(dist_score_trees, suppressMessages(get_distance_score(rf, dist_val_rf = dist_val_rf, dist_val_tree = distance_values, metric = metric, test_data = test_data)))
         }
       }
     }
