@@ -17,26 +17,12 @@ get_distance_values(rf, metric = metric, test_data = NULL)
 \item{test_data}{Additional data set comparable to the data set \code{rf} was build on. Only needed for metric "prediction".}
 }
 \value{
-\item{\code{}}{matrix of values for distance calculation (cols = trees)}
+matrix of values for distance calculation (cols = trees)
 }
 \description{
 \code{get_distance_values} calculated tree based distance values for a single tree or random forest built with \code{ranger}.
 Returned distance values still need to be aggregated, e.g. with get_distance_score.R.
 function to get distance values that returns matrix with distance values
-}
-\examples{
-require(ranger)
-require(timbR)
-
-set.seed(12345)
-## Train random forest with ranger
-rf.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
-
-##
-get_distance_values(rf = rf.iris, metric = "splitting variables")
-get_distance_values(rf = rf.iris, metric = "weighted splitting variables")
-get_distance_values(rf = rf.iris, metric = "prediction", test_data = iris)
-
 }
 \author{
 Lea Louisa Kronziel, M.sc.

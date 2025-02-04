@@ -9,34 +9,10 @@
 #' @param test_data     Additional data set comparable to the data set \code{rf} was build on. Only needed for metric "prediction".
 #'
 #' @author Lea Louisa Kronziel, M.sc.
-#' @return
-#'   \item{\code{}}{mean distance of tree to random forest}
+#' @return mean distance of tree to random forest
 #' @import ranger
 #' @import dplyr
 #' @import checkmate
-#'
-#' @examples
-#' require(ranger)
-#' require(timbR)
-#'
-#' set.seed(12345)
-#' # Train random forest with ranger
-#' rf.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
-#' tree.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 1, mtry = 3)
-#'
-#' #
-#' dist_values_rf_sv <- get_distance_values(rf = rf.iris, metric = "splitting variables")
-#' dist_values_rf_tree_sv <- get_distance_values(rf = tree.iris, metric = "splitting variables")
-#' get_distance_score(rf = rf.iris, dist_val_rf = dist_values_rf_sv, dist_val_tree = dist_values_rf_tree_sv, metric = "splitting variables", test_data = NULL)
-#'
-#' dist_values_rf_wsv <- get_distance_values(rf = rf.iris, metric = "weighted splitting variables")
-#' dist_values_rf_tree_wsv <- get_distance_values(rf = tree.iris, metric = "weighted splitting variables")
-#' get_distance_score(rf = rf.iris, dist_val_rf = dist_values_rf_wsv, dist_val_tree = dist_values_rf_tree_wsv, metric = "weighted splitting variables", test_data = NULL)
-#'
-#' dist_values_rf_pred <- get_distance_values(rf = rf.iris, metric = "prediction", test_data = iris)
-#' dist_values_rf_tree_pred <- get_distance_values(rf = tree.iris, metric = "prediction", test_data = iris)
-#' get_distance_score(rf = rf.iris, dist_val_rf = dist_values_rf_pred, dist_val_tree = dist_values_rf_tree_pred, metric = "prediction", test_data = iris)
-#'
 
 get_distance_score <- function(rf, dist_val_rf, dist_val_tree, metric, test_data = NULL){
 

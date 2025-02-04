@@ -9,24 +9,10 @@
 #' @param test_data  Additional data set comparable to the data set \code{rf} was build on. Only needed for metric "prediction".
 #'
 #' @author Lea Louisa Kronziel, M.sc.
-#' @return
-#'   \item{\code{}}{matrix of values for distance calculation (cols = trees)}
+#' @return matrix of values for distance calculation (cols = trees)
 #' @import ranger
 #' @import dplyr
 #' @import checkmate
-#'
-#' @examples
-#' require(ranger)
-#' require(timbR)
-#'
-#' set.seed(12345)
-#' ## Train random forest with ranger
-#' rf.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
-#'
-#' ##
-#' get_distance_values(rf = rf.iris, metric = "splitting variables")
-#' get_distance_values(rf = rf.iris, metric = "weighted splitting variables")
-#' get_distance_values(rf = rf.iris, metric = "prediction", test_data = iris)
 #'
 
 get_distance_values <- function(rf, metric = metric, test_data = NULL){
