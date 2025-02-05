@@ -30,6 +30,7 @@ to a point prediction with prediction interval for each observation of the test 
 \examples{
 require(ranger)
 require(timbR)
+require(dplyr)
 
 regr_data <- longley \%>\% data.frame()
 # Train random forest with ranger
