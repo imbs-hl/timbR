@@ -26,6 +26,7 @@
 #' @examples
 #' require(ranger)
 #' require(timbR)
+#' require(dplyr)
 #'
 #' regr_data <- longley %>% data.frame()
 #' # Train random forest with ranger

@@ -8,11 +8,14 @@ tree_to_text(
   node_id,
   tree_info_df,
   train_data_df,
+  test_data_df,
   rf_list,
   tree_number,
   dependent_var,
   show_sample_size,
   show_prediction_nodes,
+  show_uncertainty,
+  show_coverage,
   vert_sep,
   hor_sep,
   colors
@@ -25,6 +28,8 @@ tree_to_text(
 
 \item{train_data_df}{Data frame of the training data with which the random forest was trained}
 
+\item{test_data_df}{Data frame of the test data (only needed, if show_coverage = TRUE)}
+
 \item{rf_list}{Random forest, which is built like the one you get from ranger()}
 
 \item{tree_number}{Number of the decision tree of the rf_list to be displayed}
@@ -34,6 +39,10 @@ tree_to_text(
 \item{show_sample_size}{Option to display percentage of observations that reach nodes during training (TRUE or FALSE)}
 
 \item{show_prediction_nodes}{Option to display prediction in all nodes (TRUE or FALSE)}
+
+\item{show_uncertainty}{Option to display uncertainty quantification in terminal nodes (for now only available for regression)}
+
+\item{show_coverage}{Option to display marginal coverage (only in combination with show_uncertainty = TRUE)}
 
 \item{vert_sep}{Vertical spacing of nodes in mm (parameter from Latex package "forest")}
 
