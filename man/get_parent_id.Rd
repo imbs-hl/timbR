@@ -17,3 +17,6 @@ Parent node ID (number)
 \description{
 Get ID of parent node
 }
+\author{
+Lea Louisa Kronziel, M.Sc.
+}
