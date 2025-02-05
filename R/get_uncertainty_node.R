@@ -31,7 +31,7 @@ get_uncertainty_node <- function(tree_info_df, rf_list, test_data_df, tree_numbe
 
     if(show_coverage){
       # Get observations in current node
-      splitted_data_list <- timbR:::get_splitted_data(tree_info_df, test_data_df, rf_list, tree_number)
+      splitted_data_list <- get_splitted_data(tree_info_df, test_data_df, rf_list, tree_number)
       node_observations <- splitted_data_list[[node_id+1]]
 
       # Calculate marginal coverage
