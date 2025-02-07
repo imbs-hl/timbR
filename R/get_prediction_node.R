@@ -38,7 +38,7 @@ get_prediction_node <- function(tree_info_df, train_data_df, rf_list, dependent_
     prediction <- prediction_freq[1] %>% names()
 
     # Accuracy of prediction
-    prediction_acc <- paste0("(", round(prediction_freq[1]/length(label_vector)*100), "\\%)")
+    prediction_acc <- paste0(" (", round(prediction_freq[1]/length(label_vector)*100), "\\%)")
   }
 
 

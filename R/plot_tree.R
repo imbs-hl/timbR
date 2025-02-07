@@ -1,11 +1,15 @@
 #' Generates pdf document with plot from decision tree (classification or regression)
 #' @param tree_info_df            Data frame containing information about the structure of the decision tree, which is built like a "treeInfo()" data frame from the package "ranger"
 #' @param train_data_df           Data frame of the training data with which the random forest was trained
+#' @param test_data_df            Data frame of the test data (only needed, if show_coverage = TRUE)
 #' @param rf_list                 Random forest, which is built like the one you get from ranger()
 #' @param tree_number             Number of the decision tree of the rf_list to be displayed
 #' @param dependent_var           Name of the column of the dependent variable in training data
 #' @param show_sample_size        Option to display percentage of observations that reach nodes during training, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
 #' @param show_prediction_nodes   Option to display prediction in all nodes, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
+#' @param show_uncertainty        Option to display uncertainty quantification in terminal nodes (for now only available for regression)
+#' @param show_coverage           Option to display marginal coverage (only in combination with show_uncertainty = TRUE)
+#' @param show_intervalwidth      Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @param work_dir                Path where plot should be saved
@@ -33,17 +37,21 @@
 #' ## Specify the path to the folder where the plot should be saved
 #' work_dir <- getwd()
 #'
+#' data(iris)
+#'
 #' set.seed(12345)
 #' ## Train random forest with ranger
-#' rf_iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
+#' rf_iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10, min.node.size = 70)
 #' ## Get the treeInfo() of the first tree
 #' treeinfo_iris <- treeInfo(rf_iris)
+#'
 #' ## Plot the first tree
-#' plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, rf_list = rf_iris, dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
+#' timbR::plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, test_data_df = iris, rf_list = rf_iris,
+#'                  dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
 
 
-plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dependent_var,
-                      show_sample_size = FALSE, show_prediction_nodes = FALSE,
+plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list, tree_number = 1, dependent_var,
+                      show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = FALSE, show_coverage = FALSE, show_intervalwidth = FALSE,
                       vert_sep = 25, hor_sep = 25,
                       work_dir, plot_name, colors = NULL){
 
@@ -105,10 +113,8 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   }
 
   # tree_info_df
-  if (any(colnames(tree_info_df) != c("nodeID",
-                                      "leftChild","rightChild",
-                                      "splitvarID","splitvarName","splitval",
-                                      "terminal","prediction"))){
+  if (any(!(c("nodeID", "leftChild","rightChild",  "splitvarID",
+              "splitvarName","splitval", "terminal","prediction") %in% colnames(tree_info_df)))){
     stop("tree_info_df must be built like treeInfo() from ranger.")
   }
   if (nrow(tree_info_df) < 2){
@@ -139,6 +145,26 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   if(is.null(rf_list$inbag.counts) & (show_sample_size == TRUE | show_prediction_nodes == TRUE)){
     stop("For show_sample_size = TRUE or show_prediction_nodes = TRUE, inbag.counts must be present in ranger (set keep.inbag = TRUE).")
   }
+  # show_uncertainty, show_coverage, show_intervalwidth
+  if(!show_uncertainty & show_coverage){
+    stop("For show_coverage = TRUE, show_uncertainty has to be TRUE set is needed.")
+  }
+  if(!show_uncertainty & show_intervalwidth){
+    stop("For show_intervalwidth = TRUE, show_uncertainty has to be TRUE set is needed.")
+  }
+  if(is.null(test_data_df) & (show_coverage | show_intervalwidth)){
+    stop("For show_coverage = TRUE and show_intervalwidth = TRUE, test_data set is needed.")
+  }
+
+  # test_data_df
+  if(!is.null(test_data_df)){
+    if(!checkmate::test_class(test_data_df, "data.frame")){
+      stop("test_data_df muste be a data.frame.")
+    }
+    if(!dependent_var %in% colnames(test_data_df)){
+      stop("dependent_var has to be a column of test_data_df.")
+    }
+  }
 
   # work_dir
   if (!file.exists(work_dir)){
@@ -162,11 +188,15 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
                       tree_to_text(node_id = 0,
                                    tree_info_df = tree_info_df,
                                    train_data_df = train_data_df,
+                                   test_data_df = test_data_df,
                                    rf_list = rf_list,
                                    tree_number = tree_number,
                                    dependent_var = dependent_var,
                                    show_sample_size = show_sample_size,
                                    show_prediction_nodes = show_prediction_nodes,
+                                   show_uncertainty = show_uncertainty,
+                                   show_coverage = show_coverage,
+                                   show_intervalwidth = show_intervalwidth,
                                    vert_sep = vert_sep,
                                    hor_sep = hor_sep,
                                    colors = colors),
@@ -206,5 +236,5 @@ plot_tree <- function(tree_info_df, train_data_df, rf_list, tree_number = 1, dep
   pdflatex(temp_tex_path, pdf_file = file.path(work_dir, paste0(plot_name, ".pdf")), clean = TRUE)
 
   # print where plot is saved
-  print(paste0("Your plot is saved here: ", work_dir, paste0(plot_name, ".pdf")))
+  print(paste0("Your plot is saved here: ", work_dir, paste0("/", plot_name, ".pdf")))
 }
