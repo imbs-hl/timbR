@@ -10,12 +10,13 @@
 #' @param show_prediction_nodes   Option to display prediction in all nodes (TRUE or FALSE)
 #' @param show_uncertainty        Option to display uncertainty quantification in terminal nodes (for now only available for regression)
 #' @param show_coverage           Option to display marginal coverage (only in combination with show_uncertainty = TRUE)
+#' @param show_intervalwidth      Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                       Character pasted Latex code for the plot with the Latex package "forest"
 tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
-                         show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage,
+                         show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
                          vert_sep, hor_sep, colors){
 
   l_sep <- paste0(vert_sep, "mm")
@@ -35,7 +36,7 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_
                                get_prediction_terminal_node(tree_info_df, train_data_df, rf_list, dependent_var, tree_number, node_id),
                                "")
     if(show_uncertainty){
-      uncertainty <- paste0(" ", get_uncertainty_node(tree_info_df, rf_list, test_data_df, tree_number, node_id, dependent_var, show_coverage = TRUE))
+      uncertainty <- paste0(" ", get_uncertainty_node(tree_info_df, rf_list, test_data_df, tree_number, node_id, dependent_var, show_coverage, show_intervalwidth))
     }else{
       uncertainty <- ""
     }
@@ -73,12 +74,12 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_
                  get_split_criterion(tree_info_df, node_id, train_data_df, rf_list), "}}",
                  "[",
                  tree_to_text(tree_info_df$leftChild[node_id+1], tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
-                              show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage,
+                              show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
                               vert_sep, hor_sep, colors),
                  "]",
                  "[",
                  tree_to_text(tree_info_df$rightChild[node_id+1], tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
-                              show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage,
+                              show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
                               vert_sep, hor_sep, colors),
                  "]")
   return(node)
