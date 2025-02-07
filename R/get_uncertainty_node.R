@@ -6,10 +6,11 @@
 #' @param node_id              Node ID of the node whose parent ID is to be determined
 #' @param dependent_var        Name of the dependent variable used to create the forest
 #' @param show_coverage        Option to display marginal coverage
+#' @param show_intervalwidth   Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                    Character with the number of observations reaching this node
 
-get_uncertainty_node <- function(tree_info_df, rf_list, test_data_df, tree_number, node_id, dependent_var, show_coverage = TRUE){
+get_uncertainty_node <- function(tree_info_df, rf_list, test_data_df, tree_number, node_id, dependent_var, show_coverage = FALSE, show_intervalwidth = FALSE){
   if(rf_list$treetype == "Regression"){
     # Check if lower and upper bound exist
     if(is.null(tree_info_df$lower_bound) | is.null(tree_info_df$upper_bound)){
@@ -31,11 +32,11 @@ get_uncertainty_node <- function(tree_info_df, rf_list, test_data_df, tree_numbe
 
     if(show_coverage){
       # Get observations in current node
-      splitted_data_list <- timbR:::get_splitted_data(tree_info_df, test_data_df, rf_list, tree_number)
+      splitted_data_list <- get_splitted_data(tree_info_df, test_data_df, rf_list, tree_number)
       node_observations <- splitted_data_list[[node_id+1]]
 
       # Calculate marginal coverage
-      marginal_coverage <- paste0(round(sum(node_observations[,dependent_var] >= lower_bound &
+      marginal_coverage <- paste0("\\\\ coverage = ", round(sum(node_observations[,dependent_var] >= lower_bound &
                                               node_observations[,dependent_var] <= upper_bound)/nrow(node_observations)*100, 2), "\\%",
                                    "\\\\ $n_{test}$ = ", nrow(node_observations)
                                   )
@@ -43,9 +44,14 @@ get_uncertainty_node <- function(tree_info_df, rf_list, test_data_df, tree_numbe
     }else{
       marginal_coverage <- ""
     }
-    # Marginal coverage
+    # Prediction interval width
+    if(show_intervalwidth){
+      show_intervalwidth <- paste0("\\\\ interval width = ", upper_bound-lower_bound)
+    }else{
+      show_intervalwidth <- ""
+    }
 
-    return(paste0(pred_interval, "\\\\ coverage = ", marginal_coverage))
+    return(paste0(pred_interval, show_intervalwidth, marginal_coverage))
   }else{
     stop("uncertainty only available for regression for now")
   }
