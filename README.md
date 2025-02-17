@@ -9,7 +9,7 @@ Lea Louisa Kronziel, Björn-Hergen Laabs
 timbR is a collection of methods for the interpretation of random forests trained by ranger. 
 
 In version 1.0 most representaive trees can be selected based on different tree based distance measures.
-In version 2.0 artificial representaive trees can be created based on different tree based distance measures.
+In version 2.0 artificial representative trees can be created based on different tree based distance measures. In addition, uncertainty quantification for regression using inductive conformal prediction (ICP) and Mondrian ICP is available. 
 
 ### Installation
 #### R version
