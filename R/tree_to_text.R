@@ -11,12 +11,14 @@
 #' @param show_uncertainty        Option to display uncertainty quantification in terminal nodes (for now only available for regression)
 #' @param show_coverage           Option to display marginal coverage (only in combination with show_uncertainty = TRUE)
 #' @param show_intervalwidth      Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)
+#' @param survival_forest         Empty terminal nodes for survival
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                       Character pasted Latex code for the plot with the Latex package "forest"
 tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
                          show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
+                         survival_forest,
                          vert_sep, hor_sep, colors){
 
   l_sep <- paste0(vert_sep, "mm")
@@ -41,8 +43,11 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_
       uncertainty <- ""
     }
 
+    # hide prediction for survival
+    pred <- ifelse(survival_forest, "", tree_info_df$prediction[node_id+1])
+
     leaf <- paste0("{",
-                   gsub("_", "\\\\_", tree_info_df$prediction[node_id+1]),
+                   gsub("_", "\\\\_", pred),
                    prediction_nodes,
                    uncertainty,
                    sample_size,
@@ -75,12 +80,12 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_
                  "[",
                  tree_to_text(tree_info_df$leftChild[node_id+1], tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
                               show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
-                              vert_sep, hor_sep, colors),
+                              survival_forest,vert_sep, hor_sep, colors),
                  "]",
                  "[",
                  tree_to_text(tree_info_df$rightChild[node_id+1], tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
                               show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
-                              vert_sep, hor_sep, colors),
+                              survival_forest,vert_sep, hor_sep, colors),
                  "]")
   return(node)
 }

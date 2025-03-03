@@ -48,6 +48,15 @@
 #' ## Plot the first tree
 #' timbR::plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, test_data_df = iris, rf_list = rf_iris,
 #'                  dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
+#'
+#'
+#' ## Survival example
+#' require(survival)
+#' rg.veteran <- ranger(Surv(time, status) ~ ., data = veteran, num.trees = 10, min.node.size = 50)
+#' treeinfo_veteran <- treeInfo(rg.veteran)
+#'
+#' timbR::plot_tree(tree_info_df = treeinfo_veteran, train_data_df = veteran, test_data_df = veteran, rf_list = rg.veteran,
+#'                  dependent_var = "time", work_dir = work_dir, plot_name = "example_plot")
 
 
 plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list, tree_number = 1, dependent_var,
@@ -105,16 +114,16 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
   }
 
   # rf_list
-  if(rf_list$treetype != "Classification" & rf_list$treetype != "Regression"){
-    stop("It must be a random forest for regression or classification.")
-  }
+  # if(rf_list$treetype != "Classification" & rf_list$treetype != "Regression"){
+  #   stop("It must be a random forest for regression or classification.")
+  # }
   if(any(colnames(tree_info_df) %in% rf_list$forest$independent.variable.names)){
     stop("At least one variable in tree_info_df is not a variable of rf_list.")
   }
 
   # tree_info_df
   if (any(!(c("nodeID", "leftChild","rightChild",  "splitvarID",
-              "splitvarName","splitval", "terminal","prediction") %in% colnames(tree_info_df)))){
+              "splitvarName","splitval", "terminal") %in% colnames(tree_info_df)))){
     stop("tree_info_df must be built like treeInfo() from ranger.")
   }
   if (nrow(tree_info_df) < 2){
@@ -183,6 +192,9 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
 
   ## Plot tree ----
 
+  # plot empty terminal nodes for survival
+  survival_forest <- rf_list$treetype == "Survival"
+
   # Generate Latex code for the plot of the tree
   tree_code <- paste0("[",
                       tree_to_text(node_id = 0,
@@ -197,6 +209,7 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
                                    show_uncertainty = show_uncertainty,
                                    show_coverage = show_coverage,
                                    show_intervalwidth = show_intervalwidth,
+                                   survival_forest = survival_forest,
                                    vert_sep = vert_sep,
                                    hor_sep = hor_sep,
                                    colors = colors),
