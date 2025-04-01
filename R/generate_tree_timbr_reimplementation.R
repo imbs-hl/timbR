@@ -176,8 +176,7 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
       }
     }), stringsAsFactors = FALSE)
   }
-  return(train_data)
-}
+
 
   # Prepare set up to build most similar stump
 
