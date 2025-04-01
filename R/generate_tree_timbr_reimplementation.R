@@ -165,6 +165,19 @@ generate_tree_reimplementation <- function(rf, metric = "weighted splitting vari
 
 
   # ----------
+  # Check if train data contains character variables
+  # if so they're transformed to factors as in ranger
+  if (any(sapply(train_data, is.character))) {
+    train_data <- data.frame(lapply(train_data, function(col) {
+      if (is.character(col)) {
+        return(factor(col))
+      } else {
+        return(col)
+      }
+    }), stringsAsFactors = FALSE)
+  }
+
+
   # Prepare set up to build most similar stump
 
   # Forest object from ranger
