@@ -9,6 +9,7 @@
 #' @param show_prediction_nodes   Option to display prediction in all nodes, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
 #' @param show_uncertainty        Option to display uncertainty quantification in terminal nodes (for now only available for regression)
 #' @param show_coverage           Option to display marginal coverage (only in combination with show_uncertainty = TRUE)
+#' @param show_intervalwidth      Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @param work_dir                Path where plot should be saved
@@ -50,7 +51,7 @@
 
 
 plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list, tree_number = 1, dependent_var,
-                      show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = FALSE, show_coverage = FALSE,
+                      show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = FALSE, show_coverage = FALSE, show_intervalwidth = FALSE,
                       vert_sep = 25, hor_sep = 25,
                       work_dir, plot_name, colors = NULL){
 
@@ -144,12 +145,15 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
   if(is.null(rf_list$inbag.counts) & (show_sample_size == TRUE | show_prediction_nodes == TRUE)){
     stop("For show_sample_size = TRUE or show_prediction_nodes = TRUE, inbag.counts must be present in ranger (set keep.inbag = TRUE).")
   }
-  # show_uncertainty, show_coverage
+  # show_uncertainty, show_coverage, show_intervalwidth
   if(!show_uncertainty & show_coverage){
     stop("For show_coverage = TRUE, show_uncertainty has to be TRUE set is needed.")
   }
-  if(is.null(test_data_df) & (show_coverage == TRUE)){
-    stop("For show_coverage = TRUE, test_data set is needed.")
+  if(!show_uncertainty & show_intervalwidth){
+    stop("For show_intervalwidth = TRUE, show_uncertainty has to be TRUE set is needed.")
+  }
+  if(is.null(test_data_df) & (show_coverage | show_intervalwidth)){
+    stop("For show_coverage = TRUE and show_intervalwidth = TRUE, test_data set is needed.")
   }
 
   # test_data_df
@@ -192,6 +196,7 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
                                    show_prediction_nodes = show_prediction_nodes,
                                    show_uncertainty = show_uncertainty,
                                    show_coverage = show_coverage,
+                                   show_intervalwidth = show_intervalwidth,
                                    vert_sep = vert_sep,
                                    hor_sep = hor_sep,
                                    colors = colors),
