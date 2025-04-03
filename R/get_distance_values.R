@@ -25,8 +25,8 @@ get_distance_values <- function(rf, metric = metric, test_data = NULL){
     stop("rf must be trained using write.forest = TRUE.")
   }
   if (!checkmate::testChoice(metric,
-                             choices = c("splitting variables", "weighted splitting variables", "prediction"))){
-    stop(paste("metric has to be from c('splitting variables', 'weighted splitting variables', 'prediction')."))
+                             choices = c("splitting variables", "weighted splitting variables", "prediction", "terminal nodes"))){
+    stop(paste("metric has to be from c('splitting variables', 'weighted splitting variables', 'prediction', 'terminal nodes')."))
   }
   if (metric %in% c("prediction")){
     if (checkmate::testNull(test_data)){
@@ -113,28 +113,13 @@ get_distance_values <- function(rf, metric = metric, test_data = NULL){
     return(t(US))
   }
 
-  # # Calculation for d1 of Banerjee et al. (2012) ----
-  # if (metric == "terminal nodes"){
-  #
-  #   # Calculate terminal nodes for every tree and observation
-  #   terminal_nodes <- predict(rf, data = test_data, type = "terminalNodes")$predictions
-  #
-  #   # Function to calculate list of matrices if two observations end in same leaf for every tree
-  #   calculate_same_leaf <- function(tree_nodes){as.matrix(dist(tree_nodes)) == 0}
-  #
-  #   # Calculate if two observations end in same leaf of the trees
-  #   same_leaf_list = apply(terminal_nodes, 2, calculate_same_leaf, simplify = F)
-  #
-  #   # Function to calculate the frequency of how often pairwise observations in two trees behave differently
-  #   # (same leaf in one tree vs. different leaves in the other tree)
-  #   calculate_dist_terminal_leafs <- function(same_nodes_a,same_nodes_b){
-  #     return(sum(xor(same_nodes_a,same_nodes_b))/(nrow(same_nodes_a)^2-(nrow(same_nodes_a))))
-  #   }
-  #
-  #   return(Vectorize(calculate_dist_terminal_leafs))
-  #   # # calculate distance
-  #   # distances <- outer(c,c,Vectorize(calculate_dist_terminal_leafs))
-  # }
+  # Calculation for d1 of Banerjee et al. (2012) ----
+  if (metric == "terminal nodes"){
+
+    # Calculate terminal nodes for every tree and observation
+    terminal_nodes <- predict(rf, data = test_data, type = "terminalNodes")$predictions
+    return(terminal_nodes)
+  }
 
   # Calculation for d2 of Banerjee et al. (2012) ----
   if (metric == "prediction"){
