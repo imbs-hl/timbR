@@ -11,7 +11,8 @@ get_uncertainty_node(
   tree_number,
   node_id,
   dependent_var,
-  show_coverage = TRUE
+  show_coverage = FALSE,
+  show_intervalwidth = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ get_uncertainty_node(
 \item{dependent_var}{Name of the dependent variable used to create the forest}
 
 \item{show_coverage}{Option to display marginal coverage}
+
+\item{show_intervalwidth}{Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)}
 }
 \value{
 Character with the number of observations reaching this node
