@@ -37,7 +37,7 @@ regr_data <- longley \%>\% data.frame()
 rf <- ranger(Employed ~ ., data = regr_data, num.trees = 10, importance = "permutation")
 
 # Calculate pair-wise distances for all trees
-rep_tree <- generate_tree_reimplementation(rf = rf, metric = "splitting variables", train_data = regr_data, dependent_varname = "Employed", importance.mode = TRUE, imp.num.var = 2)
+rep_tree <- generate_tree(rf = rf, metric = "splitting variables", train_data = regr_data, dependent_varname = "Employed", importance.mode = TRUE, imp.num.var = 2)
 
 # Get predictions
 rep_tree_predictions <- predict(rep_tree, regr_data)$predictions

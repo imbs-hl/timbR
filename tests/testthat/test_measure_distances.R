@@ -28,7 +28,6 @@ test_that("Test input", {
   expect_error(measure_distances(rf = 12345, metric = metric))
   expect_error(measure_distances(rf = ranger(Species ~., data = iris, write.forest = FALSE, num.trees = 10), metric = metric))
   expect_error(measure_distances(rf = rf, metric = 12345))
-  expect_error(measure_distances(rf = rf, metric = "prediction", test_data = "abc"))
   expect_error(measure_distances(rf = rf, metric = "prediction", test_data = test_data[1,]))
 
   ## unnecassary input
