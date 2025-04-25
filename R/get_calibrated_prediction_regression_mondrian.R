@@ -56,6 +56,9 @@ get_calibrated_prediction_regression_mondrian <- function(y_cal_pred, y_cal, y_t
   if(!is.numeric(y_cal)){
     stop("Values of dependent variable in calibration data have to be numeric vector.")
   }
+  if(length(y_cal_pred) != length(y_cal)){
+    stop("The vectors y_cal_pred and y_cal must have the same length.")
+  }
   if(!is.numeric(y_test_pred)){
     stop("Predictions of test data have to be numeric vector.")
   }
