@@ -56,6 +56,9 @@ get_calibrated_prediction_regression <- function(y_cal_pred, y_cal, y_test_pred,
   if(significance_level>=1 | significance_level<=0){
     stop("significance_level has to be smaller than 1 and bigger than 0.")
   }
+  if(length(y_cal_pred) != length(y_cal)){
+    stop("The vectors y_cal_pred and y_cal must have the same length.")
+  }
 
   # Calculate absolute errors of calibration set and sort them
   y_cal_abs_error <- sort(abs(y_cal_pred - y_cal), decreasing = T)
