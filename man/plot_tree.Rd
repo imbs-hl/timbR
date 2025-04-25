@@ -15,6 +15,7 @@ plot_tree(
   show_prediction_nodes = FALSE,
   show_uncertainty = FALSE,
   show_coverage = FALSE,
+  show_intervalwidth = FALSE,
   vert_sep = 25,
   hor_sep = 25,
   work_dir,
@@ -42,6 +43,8 @@ plot_tree(
 \item{show_uncertainty}{Option to display uncertainty quantification in terminal nodes (for now only available for regression)}
 
 \item{show_coverage}{Option to display marginal coverage (only in combination with show_uncertainty = TRUE)}
+
+\item{show_intervalwidth}{Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)}
 
 \item{vert_sep}{Vertical spacing of nodes in mm (parameter from Latex package "forest")}
 

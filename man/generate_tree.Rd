@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_tree.R
 \name{generate_tree}
 \alias{generate_tree}
-\title{Generate most representative tree for a random forest}
+\title{Generate artificial representative tree (art) for a random forest}
 \usage{
 generate_tree(
   rf,
@@ -14,20 +14,22 @@ generate_tree(
   imp.num.var = NULL,
   probs_quantiles = NULL,
   epsilon = 0,
+  min.bucket = 0,
+  num.splits = NULL,
   ...
 )
 }
 \arguments{
-\item{rf}{Object of class \code{ranger} used with \code{write.forest = TRUE} to generate tree for.}
+\item{rf}{Random forest (rf), object of class \code{ranger} used with \code{write.forest = TRUE} to generate tree for.}
 
-\item{metric}{Specification of the tree metric. Available are "splitting variables",
-"weighted splitting variables", "terminal nodes" and "prediction".}
+\item{metric}{Specification of the distance (dissimilarity) metric. Available are "splitting variables",
+"weighted splitting variables" and "prediction".}
 
 \item{train_data}{Data set for training of artificial representative tree}
 
-\item{test_data}{Additional data set comparable to the data set \code{rf} was build on.}
+\item{test_data}{Additional data set comparable to the data set \code{rf} was build on. Only necessary for \code{metric} prediction.}
 
-\item{dependent_varname}{Name of the dependent variable used to create the forest}
+\item{dependent_varname}{Name of the dependent variable used to create the \code{rf}}
 
 \item{importance.mode}{If TRUE variable importance measures will be used to prioritize next split in tree generation.
 Improves speed. Variable importance values have to be included in ranger object.}
@@ -41,6 +43,10 @@ Insert a numeric value, if you want to define the number on your own.}
 
 \item{epsilon}{The creation of the tree is continued even if the similarity stays the same if the percentage of
 the prediction improves by 1 - epsilon.}
+
+\item{min.bucket}{Minimal terminal node size. No nodes with less obersavtions smaller than this value can occur. Improves speed.}
+
+\item{num.splits}{The generated tree consists of a maximum of num.splits splits. Improves speed.}
 
 \item{...}{Further parameters passed on to Boruta (e.g. pValue)}
 }
@@ -56,18 +62,18 @@ which is not part of the original ensemble
 require(ranger)
 require(timbR)
 
-## Train random forest with ranger
-rg.iris <- ranger(Species ~ .,
+# Train random forest with ranger
+rf.iris <- ranger(Species ~ .,
                   data = iris,
                   write.forest=TRUE,
                   num.trees = 10,
                   importance = "permutation"
                   )
 
-## Calculate pair-wise distances for all trees
-rep_tree <- generate_tree(rf = rg.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 1)
+# Calculate pair-wise distances for all trees
+rep_tree <- generate_tree(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 2, min.bucket = 25)
 
 }
 \author{
-Dr. Bjoern-Hergen Laabs, Lea Louisa Kronziel, M.Sc.
+Lea Louisa Kronziel, M.Sc.
 }

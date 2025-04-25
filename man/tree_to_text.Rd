@@ -16,6 +16,7 @@ tree_to_text(
   show_prediction_nodes,
   show_uncertainty,
   show_coverage,
+  show_intervalwidth,
   vert_sep,
   hor_sep,
   colors
@@ -43,6 +44,8 @@ tree_to_text(
 \item{show_uncertainty}{Option to display uncertainty quantification in terminal nodes (for now only available for regression)}
 
 \item{show_coverage}{Option to display marginal coverage (only in combination with show_uncertainty = TRUE)}
+
+\item{show_intervalwidth}{Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)}
 
 \item{vert_sep}{Vertical spacing of nodes in mm (parameter from Latex package "forest")}
 

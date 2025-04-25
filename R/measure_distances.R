@@ -9,10 +9,12 @@
 #'                   "weighted splitting variables", "terminal nodes" and "prediction".
 #' @param test_data  Additional data set comparable to the data set \code{rf} was build on.
 #'
-#'@author Dr. Bjoern-Hergen Laabs
+#' @author Lea Louisa Kronziel, M.Sc.
 #' @return
 #'   \item{\code{distances}}{matrix of size \code{num.trees}x\code{num.trees}}
+#'
 #' @export measure_distances
+#'
 #' @import ranger
 #' @import dplyr
 #' @import checkmate
@@ -22,10 +24,10 @@
 #' require(timbR)
 #'
 #' set.seed(12345)
-#' ## Train random forest with ranger
+#' # Train random forest with ranger
 #' rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
 #'
-#' ##
+#' #
 #' measure_distances(rf = rg.iris, metric = "splitting variables")
 #' measure_distances(rf = rg.iris, metric = "weighted splitting variables")
 #' measure_distances(rf = rg.iris, metric = "terminal nodes", test_data = iris)
@@ -33,7 +35,7 @@
 #'
 measure_distances <- function(rf, metric = "splitting variables", test_data = NULL){
 
-  ## Check inputs ----
+  # Check inputs ----
   if (!checkmate::testClass(rf, "ranger")){
     stop("rf must be of class ranger")
   }
@@ -60,48 +62,45 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
     }
   }
 
-  ## Prepare matrix for output ----
-  distances <- matrix(data = NA, nrow = rf$num.trees, ncol = rf$num.trees)
 
-  ## Extract outcome id
-  outcome_id <- rf$forest$dependent.varID
-
-  ## Extract number of features
-  num_features <- rf$num.independent.variables
-
-  ## Calculation for d0 of Banerjee et al. (2012) ----
+  # Calculation for d0 of Banerjee et al. (2012) ----
   if (metric == "splitting variables"){
-    ## Simplify for each tree which features were used
-    feature_usage <- lapply(X      = 1:rf$num.trees,
-                            FUN    = function(x){
-                              splitting_variables <- sort(unique(treeInfo(rf, x)$splitvarID))
-                              fu <- rep(0, num_features)
-                              fu[(splitting_variables+1)] <- 1
-                              fu
-                            })
+    # # Extract number of features
+    num_features <- rf$num.independent.variables
+    # Simplify for each tree which features were used
+    feature_usage <- matrix(unlist(lapply(X      = 1:rf$num.trees,
+                                          FUN    = function(x){
+                                            splitting_variables <- treeInfo(rf, x)$splitvarID
+                                            fu <- rep(0, num_features)
+                                            fu[(splitting_variables+1)] <- 1
+                                            fu
+                                            }
+                                          )
+                                   ),
+                            nrow = num_features
+                            )
 
-    ## Calculate standardized pair-wise distances
-    for (i in 1:rf$num.trees){
-      for (j in 1:rf$num.trees){
-        distances[i,j] <- sum((feature_usage[[i]] - feature_usage[[j]])^2)/num_features
-      }
-    }
+    # Calculate standardized pair-wise distances
+    distances <- as.matrix(dist(t(feature_usage), method = "euclidian"))^2 / num_features
   }
 
-  ## Calculation weighted version of d0 ----
+  # Calculation weighted version of d0 ----
   if (metric == "weighted splitting variables"){
-    ## Calculate usage score for each variable
+    # # Extract number of features
+    num_features <- rf$num.independent.variables
+
+    # Calculate usage score for each variable
     US <- lapply(1:rf$num.trees, function(i){
-      ## initialize levels for ith tree
+      # initialize levels for ith tree
       split_level <- rep(1, length(rf$forest$split.varIDs[[i]]))
 
-      ## Extract child node IDs for ith tree
+      # Extract child node IDs for ith tree
       child.nodeIDs <- rf$forest$child.nodeIDs[[i]]
 
-      ## Extract split var IDs for ith tree
+      # Extract split var IDs for ith tree
       split.varIDs <- rf$forest$split.varIDs[[i]]
 
-      ## Child nodes get level of parent node + 1 ----
+      # Child nodes get level of parent node + 1 ----
       for (j in 1:length(rf$forest$split.varIDs[[i]])){
         if (child.nodeIDs[[1]][j] != 0){
           split_level[child.nodeIDs[[1]][j] + 1] <- split_level[j] + 1
@@ -112,7 +111,7 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
         }
       }
 
-      ## Usage score for each variable
+      # Usage score for each variable
       US <- rep(0, rf$num.independent.variables)
 
       US <- lapply(1:rf$num.independent.variables, function(j){
@@ -130,83 +129,47 @@ measure_distances <- function(rf, metric = "splitting variables", test_data = NU
 
     US <- do.call("rbind", US)
 
-
-    distance <- lapply(1:rf$num.trees, function(x){
-      distance <- lapply(1:rf$num.trees, function(y){
-        #1/rf$num.independent.variables * sum((US[x,] - US[y,])^2)
-        sum((US[x,] - US[y,])^2)
-      })
-
-      as.numeric(do.call("rbind", distance))
-    })
-
-    distances <- as.matrix(do.call("rbind", distance))
-
+    distances <- as.matrix(dist(US, method = "euclidian"))^2
   }
 
-  ## Calculation for d1 of Banerjee et al. (2012) ----
+  # Calculation for d1 of Banerjee et al. (2012) ----
   if (metric == "terminal nodes"){
-    distances <- matrix(data = 0, nrow = rf$num.trees, ncol = rf$num.trees)
 
-    ## Initialize matrix for terminal nodes
-    term_node <- predict(rf, data = test_data, type = "terminalNodes")$predictions
+    # Calculate terminal nodes for every tree and observation
+    terminal_nodes <- predict(rf, data = test_data, type = "terminalNodes")$predictions
 
-    ## Calculate if observations end in same terminal node for each tree
-    I <- list()
+    # Function to calculate list of matrices if two observations end in same leaf for every tree
+    calculate_same_leaf <- function(tree_nodes){as.matrix(dist(tree_nodes)) == 0}
 
-    for (x in 1:rf$num.trees){
-      I[[x]] <- matrix(data = NA, nrow = nrow(test_data), ncol = nrow(test_data))
+    # Calculate if two observations end in same leaf of the trees
+    same_leaf_list = apply(terminal_nodes, 2, calculate_same_leaf, simplify = F)
 
-      for (i in 1:nrow(test_data)){
-        for (j in 1:nrow(test_data)){
-          if (term_node[i,x] == term_node[j,x]){
-            I[[x]][i,j] <- 1
-          } else {
-            I[[x]][i,j] <- 0
-          }
-        }
-      }
+    # Function to calculate the frequency of how often pairwise observations in two trees behave differently
+    # (same leaf in one tree vs. different leaves in the other tree)
+    calculate_dist_terminal_leafs <- function(same_nodes_a,same_nodes_b){
+      return(sum(xor(same_nodes_a,same_nodes_b))/(nrow(same_nodes_a)^2-(nrow(same_nodes_a))))
     }
 
-    ## Calculate distances
-    for (x in 1:rf$num.trees){
-      for (y in 1:rf$num.trees){
-        for (i in 1:(nrow(test_data)-1)){
-          for (j in (i+1):nrow(test_data)){
-            distances[x,y] <- distances[x,y] + abs(I[[x]][i,j] - I[[y]][i,j])
-          }
-        }
-      }
-    }
-
-    ## Normailze distances
-    distances <- distances / choose(nrow(test_data), 2)
+    # calculate distance
+    distances <- outer(same_leaf_list,same_leaf_list,Vectorize(calculate_dist_terminal_leafs))
   }
 
-  ## Calculation for d2 of Banerjee et al. (2012) ----
+  # Calculation for d2 of Banerjee et al. (2012) ----
   if (metric == "prediction"){
 
-    ## Predict outcome for all test data
+    # Predict outcome for all test data
     pred <- predict(rf, data = test_data, predict.all = TRUE)
 
-    ## Controll if outcome is factor
+    # Controll if outcome is factor
     if (is.factor(rf$predictions)){
-      ## Calculate standardized pair-wise distances
-      for (i in 1:rf$num.trees){
-        for (j in 1:rf$num.trees){
-          distances[i,j] <- sum(pred$predictions[,i] != pred$predictions[,j])/nrow(test_data)
-        }
-      }
+      # Calculate standardized pair-wise distances
+      distances <- as.matrix(dist(t(pred$predictions), method = "manhattan")) / nrow(test_data)
     } else {
-      ## Calculate standardized pair-wise distances
-      for (i in 1:rf$num.trees){
-        for (j in 1:rf$num.trees){
-          distances[i,j] <- sum((pred$predictions[,i] - pred$predictions[,j])^2)/nrow(test_data)
-        }
-      }
+      # Calculate standardized pair-wise distances: quadratic euclidian distance
+      distances <- as.matrix(dist(t(pred$predictions), method = "euclidian"))^2 / nrow(test_data)
     }
   }
 
-  ## Return distance matrix ----
+  # Return distance matrix ----
   return(distances)
 }
