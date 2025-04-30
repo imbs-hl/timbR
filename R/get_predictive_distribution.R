@@ -9,7 +9,7 @@
 #'
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @return
-#'   \item{list with one cpd for each test observation
+#'   \item{list with one cpd for each test observation}
 #' @import ranger
 #' @import dplyr
 #' @import checkmate
