@@ -82,8 +82,8 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
   }
 
-  if ((rf$treetype %in% c("Classification", "Regression") == FALSE)){
-    stop("Treetyp not supported. Please use classification or regression trees.")
+  if ((rf$treetype %in% c("Classification", "Regression", "Probability estimation") == FALSE)){
+    stop("Treetyp not supported. Please use classification, probability estimation or regression trees.")
   }
 
   if (checkmate::testNull(train_data)){
@@ -284,6 +284,14 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   tree$split.varIDs <- list()
   tree$split.values <- list()
 
+  # Add class counts only for probability ART
+  if(rf$treetype == "Probability estimation"){
+    tree$terminal.class.counts <- list()
+    num_classes <- length(unique(train_data[,dependent_varname]))
+    names_classes <- unique(train_data[,dependent_varname])
+  }
+
+
   # empty ranger object that is used to build ranger object if necessary
   ranger_tree <- rf
   ranger_tree$predictions <- NA
@@ -300,7 +308,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   # ------
   # Get distance values for trees in RF (trees as columns)
   dist_val_rf <- suppressMessages(get_distance_values(rf, metric = metric, test_data = test_data))
-
 
   # Build all possible stumps
   stumps <- list()
@@ -340,6 +347,14 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     } else if(rf$treetype == "Regression"){
       tree$split.values[[tree$num.trees]][2] <- mean(node_data$left[,dependent_varname])
       tree$split.values[[tree$num.trees]][3] <- mean(node_data$right[,dependent_varname])
+    } else if(rf$treetype == "Probability estimation"){
+      class_fraction_left_node <- as.numeric(table(factor(node_data$left[,dependent_varname], levels = names_classes)))/nrow(node_data$left)
+      class_fraction_right_node <- as.numeric(table(factor(node_data$right[,dependent_varname], levels = names_classes)))/nrow(node_data$right)
+      tree$terminal.class.counts <- list(list(numeric(), class_fraction_left_node, class_fraction_right_node))
+
+      tree$split.values[[tree$num.trees]][2] <- 0
+      tree$split.values[[tree$num.trees]][3] <- 0
+
     }
 
     # Save stumps, used data per node of stump and distance score of stump
@@ -377,7 +392,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       } else if(ranger_tree$treetype == "Regression"){
         true <- as.numeric(train_data[,dependent_varname])
         return(sum((pred - true)^2)/length(pred))
+      }else if(ranger_tree$treetype == "Probability estimation"){
+        # Brier Score pro Klasse berechnen
+        return(get_brier_score(pred[,,1], train_data[,dependent_varname]))
       }
+
     }, stumps[ids_minimal_dist],
     MoreArgs = list(ranger_tree = ranger_tree, train_data = train_data))
 
@@ -401,6 +420,8 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     } else if(ranger_tree$treetype == "Regression"){
       true <- as.numeric(train_data[,dependent_varname])
       error_last_tree <- sum((pred - true)^2)/length(pred)
+    } else if(ranger_tree$treetype == "Probability estimation"){
+      error_last_tree <- get_brier_score(pred[,,1], train_data[,dependent_varname])
     }
   }
 
@@ -511,9 +532,22 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
             prediction <- names(which.max(table(splitted_data$right[,dependent_varname])))
             tree$split.values[[1]][max_node+2] <- as.numeric(which(tree$levels == prediction))
 
-          }else{
+          }else if(ranger_tree$treetype == "Regression"){
             tree$split.values[[1]][max_node+1] <- mean(splitted_data$left[,dependent_varname])
             tree$split.values[[1]][max_node+2] <- mean(splitted_data$right[,dependent_varname])
+          }else if(ranger_tree$treetype == "Probability estimation"){
+            # prediction
+            tree$split.values[[1]][max_node+1] <- 0
+            tree$split.values[[1]][max_node+2] <- 0
+
+            # class counts
+            class_fraction_left_node <- as.numeric(table(factor(splitted_data$left[,dependent_varname], levels = names_classes)))/nrow(splitted_data$left)
+            class_fraction_right_node <- as.numeric(table(factor(splitted_data$right[,dependent_varname], levels = names_classes)))/nrow(splitted_data$right)
+            # Set class counts of node to 0
+            tree$terminal.class.counts[[1]][[node]] <- double()
+            # Add class counts of new terminal nodes
+            tree$terminal.class.counts[[1]][[max_node+1]] <- class_fraction_left_node
+            tree$terminal.class.counts[[1]][[max_node+2]] <- class_fraction_right_node
           }
           # Add possible tree to list
           possible_trees <- c(possible_trees, list(tree))
@@ -555,6 +589,8 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
         } else if(ranger_temp$treetype == "Regression"){
           true <- as.numeric(train_data[,dependent_varname])
           return(sum((pred - true)^2)/length(pred))
+        } else if(ranger_tree$treetype == "Probability estimation"){
+          return(get_brier_score(pred[,,1], train_data[,dependent_varname]))
         }
       }, possible_trees[ids_minimal_dist],
       MoreArgs = list(ranger_temp = ranger_temp, train_data = train_data))
@@ -579,7 +615,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       } else if(ranger_temp$treetype == "Regression"){
         true <- as.numeric(train_data[,dependent_varname])
         error_tree <- sum((pred - true)^2)/length(pred)
+      }else if(ranger_tree$treetype == "Probability estimation"){
+        error_tree <- get_brier_score(pred[,,1], train_data[,dependent_varname])
       }
+
+
     }
 
     # Stop growing ART if distance stays the same with no better accuracy
