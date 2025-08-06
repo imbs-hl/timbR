@@ -31,6 +31,7 @@
 #' @import checkmate
 #' @import data.table
 #' @import Boruta
+#' @import survival
 #'
 #' @export generate_tree
 #'
@@ -49,7 +50,6 @@
 #' # Calculate pair-wise distances for all trees
 #' rep_tree <- generate_tree(rf = rf.iris, metric = "splitting variables", train_data = iris, dependent_varname = "Species", importance.mode = TRUE, imp.num.var = 2, min.bucket = 25)
 #'
-
 
 generate_tree <- function(rf, metric = "weighted splitting variables", train_data, test_data = NULL, dependent_varname,
                                            importance.mode = FALSE, imp.num.var = NULL, probs_quantiles = NULL, epsilon = 0,
@@ -82,8 +82,8 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
   }
 
-  if ((rf$treetype %in% c("Classification", "Regression", "Probability estimation") == FALSE)){
-    stop("Treetyp not supported. Please use classification, probability estimation or regression trees.")
+  if ((rf$treetype %in% c("Classification", "Regression", "Probability estimation", "Survival") == FALSE)){
+    stop("Treetyp not supported. Please use classification, probability estimation, survival, or regression trees.")
   }
 
   if (checkmate::testNull(train_data)){
@@ -163,6 +163,10 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     stop("min.bucket should be smaller than the number of observations in train data. Please use a meaningful value.")
   }
 
+  # Metric 'prediction' can't be used for survival at the moment
+  if(rf$treetype == "Survival" & metric == "prediction"){
+    stop("Metric 'prediciton' can't be used for Survival. Please chose other metric.")
+  }
 
   # ----------
   # Check if train data contains character variables
@@ -176,7 +180,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       }
     }), stringsAsFactors = FALSE)
   }
-
 
   # Prepare set up to build most similar stump
 
@@ -277,6 +280,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
   }
 
+  # Check, if any split points are left
+  if(nrow(split_points) == 0){
+    stop("No split points available, because all have been filtered out (e.g. because of too small imp.num.var).")
+  }
+
   # Initialize tree as the forest part of a ranger object, rest of ranger object is added later if necessary
   tree <- forest
   tree$num.trees <- 1
@@ -290,7 +298,13 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     num_classes <- length(unique(train_data[,dependent_varname]))
     names_classes <- unique(train_data[,dependent_varname])
   }
-
+  # Add chf for survival ART and keep unique death times from RF
+  # Save time and status variables of survival analysis
+  if(rf$treetype == "Survival"){
+    tree$chf <- list(list(double()))
+    dependent_varname <- rf$dependent.variable.name
+    status_varname <- rf$status.variable.name
+  }
 
   # empty ranger object that is used to build ranger object if necessary
   ranger_tree <- rf
@@ -304,6 +318,13 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   ranger_tree$splitrule <- metric
   ranger_tree$max.depth <- NA
   ranger_tree$forest <- tree
+  ranger_tree$inbag.counts <- NULL
+
+  # Add chf and survival for survival ART and keep unique death times from RF
+  if(rf$treetype == "Survival"){
+    ranger_tree$chf <- data.frame()
+    ranger_tree$survival <- data.frame()
+  }
 
   # ------
   # Get distance values for trees in RF (trees as columns)
@@ -347,11 +368,29 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     } else if(rf$treetype == "Regression"){
       tree$split.values[[tree$num.trees]][2] <- mean(node_data$left[,dependent_varname])
       tree$split.values[[tree$num.trees]][3] <- mean(node_data$right[,dependent_varname])
+
     } else if(rf$treetype == "Probability estimation"){
       class_fraction_left_node <- as.numeric(table(factor(node_data$left[,dependent_varname], levels = names_classes)))/nrow(node_data$left)
       class_fraction_right_node <- as.numeric(table(factor(node_data$right[,dependent_varname], levels = names_classes)))/nrow(node_data$right)
       tree$terminal.class.counts <- list(list(numeric(), class_fraction_left_node, class_fraction_right_node))
 
+      # Split values of terminal nodes are 0 for probability estimation
+      tree$split.values[[tree$num.trees]][2] <- 0
+      tree$split.values[[tree$num.trees]][3] <- 0
+
+    } else if(rf$treetype == "Survival"){
+      # Calculate chf for that stump
+      chf_left_node <- compute_chf_node(time = node_data$left[,dependent_varname],
+                                        status = node_data$left[,status_varname],
+                                        death_times = rf$unique.death.times)
+      chf_right_node <- compute_chf_node(time = node_data$right[,dependent_varname],
+                                        status = node_data$right[,status_varname],
+                                        death_times = rf$unique.death.times)
+
+      tree$chf[[1]][[2]] <- chf_left_node
+      tree$chf[[1]][[3]] <- chf_right_node
+
+      # Split values of terminal nodes are 0 for survival
       tree$split.values[[tree$num.trees]][2] <- 0
       tree$split.values[[tree$num.trees]][3] <- 0
 
@@ -393,8 +432,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
         true <- as.numeric(train_data[,dependent_varname])
         return(sum((pred - true)^2)/length(pred))
       }else if(ranger_tree$treetype == "Probability estimation"){
-        # Brier Score pro Klasse berechnen
+        # Brier Score for each class
         return(get_brier_score(pred[,,1], train_data[,dependent_varname]))
+      }else if(ranger_tree$treetype == "Survival"){
+        # Calculate C Index
+        return(compute_prediction_error_internal(ranger_tree, train_data))
       }
 
     }, stumps[ids_minimal_dist],
@@ -422,7 +464,19 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       error_last_tree <- sum((pred - true)^2)/length(pred)
     } else if(ranger_tree$treetype == "Probability estimation"){
       error_last_tree <- get_brier_score(pred[,,1], train_data[,dependent_varname])
+    } else if(ranger_tree$treetype == "Survival"){
+      error_last_tree <- compute_prediction_error_internal(ranger_tree, train_data)
     }
+  }
+
+  # Return stump if no split points are left
+  if(nrow(split_points==1)){
+    if(rf$treetype=="Survival"){
+      # add overall chf and survival
+      ranger_tree$chf <- predict(art, train_data)$chf
+      ranger_tree$survival <- exp(-ranger_tree$chf)
+    }
+    return(ranger_tree)
   }
 
   # Save which observations of train data are used in every node
@@ -431,37 +485,72 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   # Check if node is pure, in this case stop splitting in that node
   splits_per_node_list <- list(split_points)
   for(i in 2:3){
-    if(nrow(unique(node_data_art[[i]][dependent_varname])) == 1){
-      splits_per_node_list[[i]] <- NA
-    }else{
-      # If node of stump is not pure, list all possible split points that could be added to that leaf
-      # List with possible splits per node and remove split used in root in daughter nodes
-      split_points_i <- split_points[-ids_minimal_dist,]
-      # Check for other potential splits if data is passed to child nodes, if that split would be used
-      # Check if number of observations on nodes is not smaller than min.bucket otherwise remove that potential split
-      number_splits <- nrow(split_points_i)
-      remove_split <- rep(FALSE, number_splits)
-      node_data <- node_data_art[[i]]
-      for(splits in 1:number_splits){
-        labels_splits <- as.numeric(node_data[split_points_i[splits,"split_var"]][,1])
-        data_left <- labels_splits <= split_points_i[splits,"split_value"]
-        data_right <- labels_splits  > split_points_i[splits,"split_value"]
-        # Remove split if no data is passed to left or right daughter node
-        if(!(any(data_left) & any(data_right))){
-          remove_split[splits] <- TRUE
-          # Remove split point regarding min bucket size
-        }else if(sum(data_left)<min.bucket | sum(data_right)<min.bucket){
-          remove_split[splits] <- TRUE
+    if(rf$treetype=="Survival"){
+      if(all(node_data_art[[i]][status_varname] == 0)){
+        splits_per_node_list[[i]] <- NA
+      }else{
+        # If node of stump is not pure, list all possible split points that could be added to that leaf
+        # List with possible splits per node and remove split used in root in daughter nodes
+        split_points_i <- split_points[-ids_minimal_dist,]
+        # Check for other potential splits if data is passed to child nodes, if that split would be used
+        # Check if number of observations on nodes is not smaller than min.bucket otherwise remove that potential split
+        number_splits <- nrow(split_points_i)
+        remove_split <- rep(FALSE, number_splits)
+        node_data <- node_data_art[[i]]
+        for(splits in 1:number_splits){
+          labels_splits <- as.numeric(node_data[split_points_i[splits,"split_var"]][,1])
+          data_left <- labels_splits <= split_points_i[splits,"split_value"]
+          data_right <- labels_splits  > split_points_i[splits,"split_value"]
+          # Remove split if no data is passed to left or right daughter node
+          if(!(any(data_left) & any(data_right))){
+            remove_split[splits] <- TRUE
+            # Remove split point regarding min bucket size
+          }else if(sum(data_left)<min.bucket | sum(data_right)<min.bucket){
+            remove_split[splits] <- TRUE
+          }
+        }
+        if(all(remove_split)){
+          splits_per_node_list[[i]] <- NA
+        }else if(any(remove_split)){
+          splits_per_node_list[[i]] <- split_points_i[!remove_split,]
+        }else{
+          splits_per_node_list[[i]] <- split_points_i
         }
       }
-      if(all(remove_split)){
+    }else{
+      if(nrow(unique(node_data_art[[i]][dependent_varname])) == 1){
         splits_per_node_list[[i]] <- NA
-      }else if(any(remove_split)){
-        splits_per_node_list[[i]] <- split_points_i[!remove_split,]
       }else{
-        splits_per_node_list[[i]] <- split_points_i
+        # If node of stump is not pure, list all possible split points that could be added to that leaf
+        # List with possible splits per node and remove split used in root in daughter nodes
+        split_points_i <- split_points[-ids_minimal_dist,]
+        # Check for other potential splits if data is passed to child nodes, if that split would be used
+        # Check if number of observations on nodes is not smaller than min.bucket otherwise remove that potential split
+        number_splits <- nrow(split_points_i)
+        remove_split <- rep(FALSE, number_splits)
+        node_data <- node_data_art[[i]]
+        for(splits in 1:number_splits){
+          labels_splits <- as.numeric(node_data[split_points_i[splits,"split_var"]][,1])
+          data_left <- labels_splits <= split_points_i[splits,"split_value"]
+          data_right <- labels_splits  > split_points_i[splits,"split_value"]
+          # Remove split if no data is passed to left or right daughter node
+          if(!(any(data_left) & any(data_right))){
+            remove_split[splits] <- TRUE
+            # Remove split point regarding min bucket size
+          }else if(sum(data_left)<min.bucket | sum(data_right)<min.bucket){
+            remove_split[splits] <- TRUE
+          }
+        }
+        if(all(remove_split)){
+          splits_per_node_list[[i]] <- NA
+        }else if(any(remove_split)){
+          splits_per_node_list[[i]] <- split_points_i[!remove_split,]
+        }else{
+          splits_per_node_list[[i]] <- split_points_i
+        }
       }
     }
+
   }
 
   # Save distance of used stump (art)
@@ -481,6 +570,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     number_splits <- nrow(treeinfo_art %>% filter(!terminal))
     if(!is.null(num.splits)){
       if(number_splits == num.splits){
+        if(rf$treetype=="Survival"){
+          # add overall chf and survival
+          ranger_tree$chf <- predict(art, train_data)$chf
+          ranger_tree$survival <- exp(-ranger_tree$chf)
+        }
         return(ranger_tree)
       }
     }
@@ -548,6 +642,30 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
             # Add class counts of new terminal nodes
             tree$terminal.class.counts[[1]][[max_node+1]] <- class_fraction_left_node
             tree$terminal.class.counts[[1]][[max_node+2]] <- class_fraction_right_node
+
+          }else if(ranger_tree$treetype == "Survival"){
+            # prediction
+            tree$split.values[[1]][max_node+1] <- 0
+            tree$split.values[[1]][max_node+2] <- 0
+
+            # Calculate chf for that tree
+            chf_left_node <- compute_chf_node(time = splitted_data$left[,dependent_varname],
+                                              status = splitted_data$left[,status_varname],
+                                              death_times = rf$unique.death.times)
+            chf_right_node <- compute_chf_node(time = splitted_data$right[,dependent_varname],
+                                               status = splitted_data$right[,status_varname],
+                                               death_times = rf$unique.death.times)
+
+            # Set chf of node to 0
+            tree$chf[[1]][[node]] <- double()
+            # Add chf of new terminal nodes
+            tree$chf[[1]][[max_node+1]] <- chf_left_node
+            tree$chf[[1]][[max_node+2]] <- chf_right_node
+
+
+            # Split values of terminal nodes are 0 for survival
+            tree$split.values[[tree$num.trees]][2] <- 0
+            tree$split.values[[tree$num.trees]][3] <- 0
           }
           # Add possible tree to list
           possible_trees <- c(possible_trees, list(tree))
@@ -564,6 +682,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }
     # Stop if no splits can be added (no possible trees existing)
     if(length(possible_trees)==0){
+      if(rf$treetype=="Survival"){
+        # add overall chf and survival
+        ranger_tree$chf <- predict(art, train_data)$chf
+        ranger_tree$survival <- exp(-ranger_tree$chf)
+      }
       return(ranger_tree)
     }
 
@@ -573,6 +696,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
     # Stop growing ART if dist gets bigger or stays the same with no better accuracy
     if(minimal_dist > dist_last_tree){
+      if(rf$treetype=="Survival"){
+        # add overall chf and survival
+        ranger_tree$chf <- predict(art, train_data)$chf
+        ranger_tree$survival <- exp(-ranger_tree$chf)
+      }
       return(ranger_tree)
     }
 
@@ -591,6 +719,9 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
           return(sum((pred - true)^2)/length(pred))
         } else if(ranger_tree$treetype == "Probability estimation"){
           return(get_brier_score(pred[,,1], train_data[,dependent_varname]))
+        } else if(ranger_tree$treetype == "Survival"){
+          # Calculate C Index
+          return(compute_prediction_error_internal(ranger_tree, train_data))
         }
       }, possible_trees[ids_minimal_dist],
       MoreArgs = list(ranger_temp = ranger_temp, train_data = train_data))
@@ -617,6 +748,9 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
         error_tree <- sum((pred - true)^2)/length(pred)
       }else if(ranger_tree$treetype == "Probability estimation"){
         error_tree <- get_brier_score(pred[,,1], train_data[,dependent_varname])
+      }else if(ranger_tree$treetype == "Survival"){
+        # Calculate C Index
+        error_tree <- compute_prediction_error_internal(ranger_tree, train_data)
       }
 
 
@@ -625,6 +759,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     # Stop growing ART if distance stays the same with no better accuracy
     if((minimal_dist == dist_last_tree & error_last_tree <= error_tree) |
        (minimal_dist == dist_last_tree & error_tree/error_last_tree > (1-epsilon))){
+      if(rf$treetype=="Survival"){
+        # add overall chf and survival
+        ranger_tree$chf <- predict(art, train_data)$chf
+        ranger_tree$survival <- exp(-ranger_tree$chf)
+      }
       return(ranger_tree)
     }
 
@@ -633,44 +772,83 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
     # Save used split points
     for(i in (max_node+1):(max_node+2)){
-      # Check if node is pure (classification), in this case stop splitting in that node
-      if(nrow(unique(node_data_art[[i]][dependent_varname])) == 1){
-        splits_per_node_list[[i]] <- NA
-      }else{
-        split_points_i <- split_point_list[[ids_minimal_dist]]
-        # Check for other splits if data is passed, if split would be used
-        number_splits <- nrow(split_points_i)
-        remove_split <- rep(FALSE, number_splits)
-        node_data <- node_data_art[[i]]
-
-        for(splits in 1:number_splits){
-          labels_splits <- as.numeric(node_data[split_points_i[splits,"split_var"]][,1])
-          data_left <- labels_splits <= split_points_i[splits,"split_value"]
-          data_right <- labels_splits  > split_points_i[splits,"split_value"]
-          # Remove split if no data is passed to left or right daughter node
-          if(!(any(data_left) & any(data_right))){
-            remove_split[splits] <- TRUE
-            # Remove split point regarding min bucket size
-          }else if(sum(data_left)<min.bucket | sum(data_right)<min.bucket){
-            remove_split[splits] <- TRUE
-          }
-        }
-
-        if(all(remove_split)){
+      # Check if node is pure or has no events (survival), in this case stop splitting in that node
+      if(rf$treetype=="Survival"){
+        if(all(node_data_art[[i]][status_varname] == 0)){
           splits_per_node_list[[i]] <- NA
-        }else if(any(remove_split)){
-          # If no plausible split points are left, stop splitting in that node
-          if(nrow(split_points_i[!remove_split,]) == 0){
-            splits_per_node_list[[i]] <- NA
-          }else{
-            splits_per_node_list[[i]] <- split_points_i[!remove_split,]
-          }
         }else{
-          splits_per_node_list[[i]] <- split_points_i
+
+          split_points_i <- split_point_list[[ids_minimal_dist]]
+          # Check for other splits if data is passed, if split would be used
+          number_splits <- nrow(split_points_i)
+          remove_split <- rep(FALSE, number_splits)
+          node_data <- node_data_art[[i]]
+
+          for(splits in 1:number_splits){
+            labels_splits <- as.numeric(node_data[split_points_i[splits,"split_var"]][,1])
+            data_left <- labels_splits <= split_points_i[splits,"split_value"]
+            data_right <- labels_splits  > split_points_i[splits,"split_value"]
+            # Remove split if no data is passed to left or right daughter node
+            if(!(any(data_left) & any(data_right))){
+              remove_split[splits] <- TRUE
+              # Remove split point regarding min bucket size
+            }else if(sum(data_left)<min.bucket | sum(data_right)<min.bucket){
+              remove_split[splits] <- TRUE
+            }
+          }
+
+          if(all(remove_split)){
+            splits_per_node_list[[i]] <- NA
+          }else if(any(remove_split)){
+            # If no plausible split points are left, stop splitting in that node
+            if(nrow(split_points_i[!remove_split,]) == 0){
+              splits_per_node_list[[i]] <- NA
+            }else{
+              splits_per_node_list[[i]] <- split_points_i[!remove_split,]
+            }
+          }else{
+            splits_per_node_list[[i]] <- split_points_i
+          }
+
+        }
+      }else{
+        if(nrow(unique(node_data_art[[i]][dependent_varname])) == 1){
+          splits_per_node_list[[i]] <- NA
+        }else{
+          split_points_i <- split_point_list[[ids_minimal_dist]]
+          # Check for other splits if data is passed, if split would be used
+          number_splits <- nrow(split_points_i)
+          remove_split <- rep(FALSE, number_splits)
+          node_data <- node_data_art[[i]]
+
+          for(splits in 1:number_splits){
+            labels_splits <- as.numeric(node_data[split_points_i[splits,"split_var"]][,1])
+            data_left <- labels_splits <= split_points_i[splits,"split_value"]
+            data_right <- labels_splits  > split_points_i[splits,"split_value"]
+            # Remove split if no data is passed to left or right daughter node
+            if(!(any(data_left) & any(data_right))){
+              remove_split[splits] <- TRUE
+              # Remove split point regarding min bucket size
+            }else if(sum(data_left)<min.bucket | sum(data_right)<min.bucket){
+              remove_split[splits] <- TRUE
+            }
+          }
+
+          if(all(remove_split)){
+            splits_per_node_list[[i]] <- NA
+          }else if(any(remove_split)){
+            # If no plausible split points are left, stop splitting in that node
+            if(nrow(split_points_i[!remove_split,]) == 0){
+              splits_per_node_list[[i]] <- NA
+            }else{
+              splits_per_node_list[[i]] <- split_points_i[!remove_split,]
+            }
+          }else{
+            splits_per_node_list[[i]] <- split_points_i
+          }
         }
       }
     }
-
 
     # Update distance and accuracy
     dist_last_tree <- minimal_dist
