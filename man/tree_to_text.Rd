@@ -17,6 +17,7 @@ tree_to_text(
   show_uncertainty,
   show_coverage,
   show_intervalwidth,
+  survival_forest,
   vert_sep,
   hor_sep,
   colors
@@ -46,6 +47,8 @@ tree_to_text(
 \item{show_coverage}{Option to display marginal coverage (only in combination with show_uncertainty = TRUE)}
 
 \item{show_intervalwidth}{Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)}
+
+\item{survival_forest}{Empty terminal nodes for survival}
 
 \item{vert_sep}{Vertical spacing of nodes in mm (parameter from Latex package "forest")}
 

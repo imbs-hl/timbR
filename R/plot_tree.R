@@ -46,7 +46,7 @@
 #' treeinfo_iris <- treeInfo(rf_iris)
 #'
 #' ## Plot the first tree
-#' timbR::plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, test_data_df = iris, rf_list = rf_iris,
+#' plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, test_data_df = iris, rf_list = rf_iris,
 #'                  dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
 #'
 #'
@@ -55,7 +55,7 @@
 #' rg.veteran <- ranger(Surv(time, status) ~ ., data = veteran, num.trees = 10, min.node.size = 50)
 #' treeinfo_veteran <- treeInfo(rg.veteran)
 #'
-#' timbR::plot_tree(tree_info_df = treeinfo_veteran, train_data_df = veteran, test_data_df = veteran, rf_list = rg.veteran,
+#' plot_tree(tree_info_df = treeinfo_veteran, train_data_df = veteran, test_data_df = veteran, rf_list = rg.veteran,
 #'                  dependent_var = "time", work_dir = work_dir, plot_name = "example_plot")
 
 

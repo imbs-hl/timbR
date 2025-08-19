@@ -216,7 +216,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       # Variable selection with Boruta algorithm from Kursa et al. (2010)
       if(rf$treetype == "Survival"){
         x = train_data %>%
-          select(-all_of(dependent_varname, status_varname))
+          select(-all_of(c(dependent_varname, status_varname)))
         y = train_data %>%
           select(all_of(dependent_varname)) %>%
           unlist()

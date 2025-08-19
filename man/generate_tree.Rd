@@ -29,7 +29,7 @@ generate_tree(
 
 \item{test_data}{Additional data set comparable to the data set \code{rf} was build on. Only necessary for \code{metric} prediction.}
 
-\item{dependent_varname}{Name of the dependent variable used to create the \code{rf}}
+\item{dependent_varname}{Name of the dependent variable used to create the \code{rf}. For survival use the name of the survival time variable.}
 
 \item{importance.mode}{If TRUE variable importance measures will be used to prioritize next split in tree generation.
 Improves speed. Variable importance values have to be included in ranger object.}
