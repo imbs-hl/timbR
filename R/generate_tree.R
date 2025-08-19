@@ -185,7 +185,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
   # Save time and status variables in case of survival analysis
   if(rf$treetype == "Survival"){
-    tree$chf <- list(list(double()))
     dependent_varname <- rf$dependent.variable.name
     status_varname <- rf$status.variable.name
   }
@@ -306,6 +305,10 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   tree$child.nodeIDs <- list()
   tree$split.varIDs <- list()
   tree$split.values <- list()
+
+  if(rf$treetype == "Survival"){
+    tree$chf <- list(list(double()))
+  }
 
   # Add class counts only for probability ART
   if(rf$treetype == "Probability estimation"){
