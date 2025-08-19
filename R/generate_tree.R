@@ -8,7 +8,7 @@
 #' @param metric            Specification of the distance (dissimilarity) metric. Available are "splitting variables",
 #'                          "weighted splitting variables" and "prediction".
 #' @param train_data        Data set for training of artificial representative tree
-#' @param dependent_varname Name of the dependent variable used to create the \code{rf}
+#' @param dependent_varname Name of the dependent variable used to create the \code{rf}. For survival use the name of the survival time variable.
 #' @param importance.mode   If TRUE variable importance measures will be used to prioritize next split in tree generation.
 #'                          Improves speed. Variable importance values have to be included in ranger object.
 #' @param imp.num.var       Number of variables to be pre selected based on importance values. If "automatic" the Boruta
@@ -183,6 +183,13 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
   # Prepare set up to build most similar stump
 
+  # Save time and status variables in case of survival analysis
+  if(rf$treetype == "Survival"){
+    tree$chf <- list(list(double()))
+    dependent_varname <- rf$dependent.variable.name
+    status_varname <- rf$status.variable.name
+  }
+
   # Forest object from ranger
   forest <- rf$forest
 
@@ -207,11 +214,19 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   if(importance.mode){
     if(imp.num.var == "automatic"){
       # Variable selection with Boruta algorithm from Kursa et al. (2010)
-      x = train_data %>%
-        select(-all_of(dependent_varname))
-      y = train_data %>%
-        select(all_of(dependent_varname)) %>%
-        unlist()
+      if(rf$treetype == "Survival"){
+        x = train_data %>%
+          select(-all_of(dependent_varname, status_varname))
+        y = train_data %>%
+          select(all_of(dependent_varname)) %>%
+          unlist()
+      }else{
+        x = train_data %>%
+          select(-all_of(dependent_varname))
+        y = train_data %>%
+          select(all_of(dependent_varname)) %>%
+          unlist()
+      }
 
       # Test for importance with Boruta
       imp = Boruta(x = x, y = y, ...)$finalDecision
@@ -299,13 +314,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     names_classes <- unique(train_data[,dependent_varname])
   }
   # Add chf for survival ART and keep unique death times from RF
-  # Save time and status variables of survival analysis
-  if(rf$treetype == "Survival"){
-    tree$chf <- list(list(double()))
-    dependent_varname <- rf$dependent.variable.name
-    status_varname <- rf$status.variable.name
-  }
-
   # empty ranger object that is used to build ranger object if necessary
   ranger_tree <- rf
   ranger_tree$predictions <- NA
