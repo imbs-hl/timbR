@@ -27,10 +27,10 @@ require(ranger)
 require(timbR)
 
 set.seed(12345)
-## Train random forest with ranger
+# Train random forest with ranger
 rg.iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10)
 
-##
+#
 measure_distances(rf = rg.iris, metric = "splitting variables")
 measure_distances(rf = rg.iris, metric = "weighted splitting variables")
 measure_distances(rf = rg.iris, metric = "terminal nodes", test_data = iris)
@@ -38,5 +38,5 @@ measure_distances(rf = rg.iris, metric = "prediction", test_data = iris)
 
 }
 \author{
-Bjoern-Hergen Laabs, M.Sc.
+Lea Louisa Kronziel, M.Sc.
 }

@@ -19,3 +19,6 @@ Data frame with inbag observations of decision tree
 \description{
 Get inbag data of decision tree
 }
+\author{
+Lea Louisa Kronziel, M.Sc.
+}
