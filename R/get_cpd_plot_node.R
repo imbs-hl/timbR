@@ -36,15 +36,6 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
   if(!is.data.frame(cal_data_node)){
     stop("cal_data has to be a data frame that contains all calibration observations that reach that terminal node")
   }
-  if(!is.data.frame(test_data_node)){
-    stop("cal_data has to be a data frame that contains all calibration observations that reach that terminal node")
-  }
-  if(!all(colnames(cal_data_node) %in% colnames(test_data_node))){
-    stop("All columns of calibration data have to be test data.")
-  }
-  if(!all(colnames(test_data_node) %in% colnames(cal_data_node))){
-    stop("All columns of test data have to be calibration data.")
-  }
   if(!dependent_varname%in%colnames(cal_data)){
     stop("depedent_varname has to be a variable name from calibration data")
   }

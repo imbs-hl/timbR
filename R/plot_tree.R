@@ -211,7 +211,8 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
                                    show_prediction_interval = show_prediction_interval,
                                    vert_sep = vert_sep,
                                    hor_sep = hor_sep,
-                                   colors = colors),
+                                   colors = colors,
+                                   work_dir = work_dir),
                       "]")
 
   # Code for the Latex document

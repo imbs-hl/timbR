@@ -19,7 +19,7 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, cal
                          threshold, significance_level, interval_type, direction,
                          show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
                          show_cpd, cpd_plot_width, show_point_prediction, show_prediction_interval,
-                         vert_sep, hor_sep, colors){
+                         vert_sep, hor_sep, colors, work_dir){
 
   l_sep <- paste0(vert_sep, "mm")
   s_sep <- paste0(hor_sep, "mm")
@@ -114,14 +114,14 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, cal
                               threshold, significance_level, interval_type, direction,
                               show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
                               show_cpd, cpd_plot_width, show_point_prediction, show_prediction_interval,
-                              vert_sep, hor_sep, colors),
+                              vert_sep, hor_sep, colors, work_dir),
                  "]",
                  "[",
                  tree_to_text(tree_info_df$rightChild[node_id+1], tree_info_df, train_data_df, test_data_df, cal_data_df, rf_list, tree_number, dependent_var,
                               threshold, significance_level, interval_type, direction,
                               show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
                               show_cpd, cpd_plot_width, show_point_prediction, show_prediction_interval,
-                              vert_sep, hor_sep, colors),
+                              vert_sep, hor_sep, colors, work_dir),
                  "]")
   return(node)
 }
