@@ -50,8 +50,10 @@
 #'                  dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
 
 
-plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list, tree_number = 1, dependent_var,
+plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data_df = NULL, rf_list, tree_number = 1, dependent_var,
+                      threshold = NULL, significance_level = 0.05, interval_type = "two-tailed", direction = NULL,
                       show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = FALSE, show_coverage = FALSE, show_intervalwidth = FALSE,
+                      show_cpd = FALSE, cpd_plot_width=22, show_point_prediction = FALSE, show_prediction_interval = FALSE,
                       vert_sep = 25, hor_sep = 25,
                       work_dir, plot_name, colors = NULL){
 
@@ -183,48 +185,76 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
 
   ## Plot tree ----
 
+
   # Generate Latex code for the plot of the tree
   tree_code <- paste0("[",
                       tree_to_text(node_id = 0,
                                    tree_info_df = tree_info_df,
                                    train_data_df = train_data_df,
                                    test_data_df = test_data_df,
+                                   cal_data_df = cal_data_df,
                                    rf_list = rf_list,
                                    tree_number = tree_number,
                                    dependent_var = dependent_var,
+                                   threshold = threshold,
+                                   significance_level = significance_level,
+                                   interval_type = interval_type,
+                                   direction = direction,
                                    show_sample_size = show_sample_size,
                                    show_prediction_nodes = show_prediction_nodes,
                                    show_uncertainty = show_uncertainty,
                                    show_coverage = show_coverage,
                                    show_intervalwidth = show_intervalwidth,
+                                   show_cpd = show_cpd,
+                                   cpd_plot_width = cpd_plot_width,
+                                   show_point_prediction = show_point_prediction,
+                                   show_prediction_interval = show_prediction_interval,
                                    vert_sep = vert_sep,
                                    hor_sep = hor_sep,
                                    colors = colors),
                       "]")
 
   # Code for the Latex document
-  template = r"(
-  \documentclass[tikz, border=2mm]{standalone}
-  \usepackage[edges]{forest}
-  \usepackage[english]{babel}
-  \usepackage{amsfonts}
-  \definecolor{oceangreen_uzl}{RGB}{0,75,90}
-  \definecolor{imbs_orange}{RGB}{203,81,25}
-  \begin{document}
-  \begin{forest}
-  for tree={draw,
-  forked edge},
-  where n children=0{tier=word}{}
-  %% begin.rcode test_leaf, results='asis', echo=FALSE, cache=FALSE
-  % cat(tree_code)
-  %% end.rcode
-  \end{forest}
-  \end{document}
-  )"
+  template <- ifelse(show_cpd,
+                     r"(
+                     \documentclass[tikz, border=2mm]{standalone}
+                     \usepackage[edges]{forest}
+                     \usepackage[english]{babel}
+                     \usepackage{amsfonts}
+                     \definecolor{oceangreen_uzl}{RGB}{0,75,90}
+                     \definecolor{imbs_orange}{RGB}{203,81,25}
+                     \begin{document}
+                     \begin{forest}
+                      for tree={draw,
+                      forked edge},
+                      where n children=1{tier=word}{}
+                      %% begin.rcode test_leaf, results='asis', echo=FALSE, cache=FALSE
+                      % cat(tree_code)
+                      %% end.rcode
+                      \end{forest}
+                      \end{document}
+                      )",
+                     r"(
+                     \documentclass[tikz, border=2mm]{standalone}
+                     \usepackage[edges]{forest}
+                     \usepackage[english]{babel}
+                     \usepackage{amsfonts}
+                     \definecolor{oceangreen_uzl}{RGB}{0,75,90}
+                     \definecolor{imbs_orange}{RGB}{203,81,25}
+                     \begin{document}
+                     \begin{forest}
+                      for tree={draw,
+                      forked edge},
+                      where n children=0{tier=word}{}
+                      %% begin.rcode test_leaf, results='asis', echo=FALSE, cache=FALSE
+                      % cat(tree_code)
+                      %% end.rcode
+                      \end{forest}
+                      \end{document}
+                      )")
 
   tex_datei = knit(text = template)
   temp_tex_path <- file.path(tempdir(), "tex_temp.tex")
-
 
   # Knit Latex code in temporary document
   tex_datei <-  knit(text = template)
@@ -234,6 +264,9 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, rf_list,
 
   # save plot as PDF document
   pdflatex(temp_tex_path, pdf_file = file.path(work_dir, paste0(plot_name, ".pdf")), clean = TRUE)
+
+  # delete pngs of cpd plots
+  invisible(suppressWarnings(file.remove(list.files(work_dir, "plot_leaf", full.names = T), showWarnings = F)))
 
   # print where plot is saved
   print(paste0("Your plot is saved here: ", work_dir, paste0("/", plot_name, ".pdf")))

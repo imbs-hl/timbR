@@ -15,8 +15,10 @@
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                       Character pasted Latex code for the plot with the Latex package "forest"
-tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
+tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, cal_data_df, rf_list, tree_number, dependent_var,
+                         threshold, significance_level, interval_type, direction,
                          show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
+                         show_cpd, cpd_plot_width, show_point_prediction, show_prediction_interval,
                          vert_sep, hor_sep, colors){
 
   l_sep <- paste0(vert_sep, "mm")
@@ -54,6 +56,41 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_
                    paste("s sep=", s_sep),",",
                    "edge label={node[midway, above,font=\\scriptsize]{",
                    get_split_criterion(tree_info_df, node_id, train_data_df, rf_list), "}}")
+
+    # add plot of cpd
+    if(show_cpd){
+      # terminal nodes for all calibration data
+      cal_data_leaves <- predict(rf_list, cal_data_df, type = "terminalNodes")$predictions
+
+      # all calibration data ending in that node
+      cal_data_node <- cal_data_df[cal_data_leaves == node_id,]
+
+      # calculate cpd and build plot
+      cps_leaf <- get_cpd_plot_node(nodeID = node_id, cal_data_node = cal_data_node,
+                                    dependent_varname = dependent_var, tree = rf_list, threshold = threshold,
+                                    significance_level = significance_level,
+                                    interval_type = interval_type, direction = direction,
+                                    show_point_prediction = show_point_prediction, show_prediction_interval = show_prediction_interval)
+      plot_leaf <- suppressWarnings(cps_leaf[[1]])
+
+      suppressMessages(suppressWarnings(ggsave(plot = plot_leaf, file.path(work_dir, paste0("plot_leaf", node_id, ".png")))))
+
+      # add probability for threshold(s)
+      probs_text <- ""
+      if(!is.null(threshold)){
+        probs <- cps_leaf[[2]]
+        probs_text <- paste0("\\\\P(y$\\leq$", probs$value, ")=",round(probs$prob*100,2),"\\%", collapse = ", ")
+      }
+
+      leaf <- paste0(leaf,
+                     "[{\\includegraphics[width=", cpd_plot_width,"mm]{",
+                     file.path(work_dir, paste0("plot_leaf", node_id, ".png")),
+                     "}", probs_text,"}, align=center, no edge]")
+    }
+
+    # Beschreibung erweitern
+    # Checks erweitern
+
     return(leaf)
   }
   prediction_nodes <- ifelse(show_prediction_nodes,
@@ -73,13 +110,17 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, rf_
                  "edge label={node[midway,above,font=\\scriptsize]{",
                  get_split_criterion(tree_info_df, node_id, train_data_df, rf_list), "}}",
                  "[",
-                 tree_to_text(tree_info_df$leftChild[node_id+1], tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
+                 tree_to_text(tree_info_df$leftChild[node_id+1], tree_info_df, train_data_df, test_data_df, cal_data_df, rf_list, tree_number, dependent_var,
+                              threshold, significance_level, interval_type, direction,
                               show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
+                              show_cpd, cpd_plot_width, show_point_prediction, show_prediction_interval,
                               vert_sep, hor_sep, colors),
                  "]",
                  "[",
-                 tree_to_text(tree_info_df$rightChild[node_id+1], tree_info_df, train_data_df, test_data_df, rf_list, tree_number, dependent_var,
+                 tree_to_text(tree_info_df$rightChild[node_id+1], tree_info_df, train_data_df, test_data_df, cal_data_df, rf_list, tree_number, dependent_var,
+                              threshold, significance_level, interval_type, direction,
                               show_sample_size, show_prediction_nodes, show_uncertainty, show_coverage, show_intervalwidth,
+                              show_cpd, cpd_plot_width, show_point_prediction, show_prediction_interval,
                               vert_sep, hor_sep, colors),
                  "]")
   return(node)
