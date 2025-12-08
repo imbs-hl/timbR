@@ -85,8 +85,8 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
 
   # Calculate "p-values" of cpd
   p <- seq(0, 1 - 1/length(cpd_dist), length.out = length(cpd_dist))
-  data_cps <- data.frame(cpd = c(cpd_dist,max(cpd_dist+0.000001)),
-                         p = c(p,1))
+  data_cps <- data.frame(cpd = c(cpd_dist,max(cpd_dist+0.000001), Inf),
+                         p = c(p,1,1))
 
   # Set limits for axis
   x_min <- min(data_cps[-1,"cpd"])
@@ -171,5 +171,12 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
                      aes(x = min(data_cps$cpd), xend = value, y = prob, color = paste0("Q(", value, ")")), show.legend = TRUE)
     }
   }
+  plot <- plot +
+    theme(text = element_text(size = 30),
+          legend.text = element_text(size = 30),
+          legend.title = element_text(size = 30),
+          legend.key.size = unit(0.6, 'cm'),
+          strip.text.y = element_text(size = 30),
+          strip.text.x = element_text(size = 30))
   return(list(plot, bind_rows(threshold_list)))
 }
