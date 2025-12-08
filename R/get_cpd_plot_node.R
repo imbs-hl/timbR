@@ -96,7 +96,7 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
   # Create basic plot
   plot <- ggplot() +
     theme_bw() +
-    geom_line(data = data_cps, aes(x = cpd, y = p)) +
+    geom_line(data = data_cps, aes(x = cpd, y = p, size = 1.5)) +
     xlab(paste0("y = ", dependent_varname)) +
     ylab("Q(y)")+
     theme(legend.position = "bottom")+
@@ -107,7 +107,7 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
   # Display point prediction
   if(show_point_prediction){
     plot <- plot +
-      geom_segment(aes(x = predict(tree, cal_data_node)$predictions, y = 0, yend = 1, color = "prediction"),
+      geom_segment(aes(x = predict(tree, cal_data_node)$predictions, y = 0, yend = 1, color = "prediction", size = 1.5),
                    linetype = "dashed")
   }
   # Display prediction interval
@@ -128,7 +128,7 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
 
       plot <- plot +
         geom_area(data = data_interval,
-                  aes(x = cpd, y = p), fill = "red", alpha = 0.15, position = "identity")
+                  aes(x = cpd, y = p, size = 1.5), fill = "red", alpha = 0.15, position = "identity")
 
     }
     else if(interval_type == "one-tailed" & direction == "left-tailed"){
@@ -141,7 +141,7 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
 
       plot <- plot +
         geom_area(data = data_interval,
-                  aes(x = cpd, y = p), fill = "red", alpha = 0.15, position = "identity")
+                  aes(x = cpd, y = p, size = 1.5), fill = "red", alpha = 0.15, position = "identity")
     }
     else if(interval_type == "one-tailed" & direction == "right-tailed"){
       # Calculate upper bound
@@ -153,7 +153,7 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
 
       plot <- plot +
         geom_area(data = data_interval,
-                  aes(x = cpd, y = p), fill = "red", alpha = 0.15, position = "identity")
+                  aes(x = cpd, y = p, size = 1.5), fill = "red", alpha = 0.15, position = "identity")
     }
   }
   # Display probability for threshold(s)
@@ -166,9 +166,9 @@ get_cpd_plot_node <- function(nodeID, cal_data_node, dependent_varname, tree, th
       threshold_list[[i]] <- data.frame(value = threshold[i], prob = 1-prob_above_threshold)
       plot <- plot +
         geom_segment(data = data_threshold,
-                     aes(x = value, y = 0, yend = prob, color = paste0("Q(", value, ")")), show.legend = TRUE)+
+                     aes(x = value, y = 0, yend = prob, color = paste0("Q(", value, ")"), size = 1.5), show.legend = TRUE)+
         geom_segment(data = data_threshold,
-                     aes(x = min(data_cps$cpd), xend = value, y = prob, color = paste0("Q(", value, ")")), show.legend = TRUE)
+                     aes(x = min(data_cps$cpd), xend = value, y = prob, color = paste0("Q(", value, ")"), size = 1.5), show.legend = TRUE)
     }
   }
   plot <- plot +
