@@ -60,7 +60,7 @@
 
 
 plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data_df = NULL, rf_list, tree_number = 1, dependent_var,
-                      threshold = NULL, significance_level = 0.05, interval_type = "two-tailed", direction = NULL,
+                      threshold = NULL, significance_level = NULL, interval_type = NULL, direction = NULL,
                       show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = FALSE, show_coverage = FALSE, show_intervalwidth = FALSE,
                       show_cpd = FALSE, cpd_plot_width=22, show_point_prediction = FALSE, show_prediction_interval = FALSE,
                       vert_sep = 25, hor_sep = 25,
@@ -82,16 +82,32 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
          is.na(work_dir), is.na(plot_name))){
     stop("One of the input parameters is NA.")
   }
+  if(show_cpd & any(is.null(cal_data_df) | is.null(cpd_plot_width))){
+    stop("cal_data_df and cpd_plot_width must not be NULL if show_cpd = TRUE")
+  }
+
+  if(!show_cpd & any(!is.null(cal_data_df) |
+                     !is.null(cpd_plot_width) |
+                     !is.null(threshold) |
+                     !is.null(significance_level) |
+                     !is.null(interval_type) |
+                     !is.null(direction) |
+                     !is.null(show_prediction_nodes) |
+                     !is.null(show_point_prediction) |
+                     !is.null(show_prediction_interval) |
+                     !is.null(show_sample_size))){
+    stop("show_cpd = TRUE is needed for displaying a cpd plot")
+  }
 
   # any input is a false class
   if(!checkmate::test_class(rf_list, "ranger")){
     stop("rf_list must be of class ranger.")
   }
   if(!checkmate::test_class(tree_info_df, "data.frame")){
-    stop("tree_info_df muste be a data.frame.")
+    stop("tree_info_df must be a data.frame.")
   }
   if(!checkmate::test_class(train_data_df, "data.frame")){
-    stop("train_data_df muste be a data.frame.")
+    stop("train_data_df must be a data.frame.")
   }
   if(!checkmate::test_class(dependent_var, "character")){
     stop("dependent_var must be the name of the dependent variable in the training dataset.")
@@ -170,7 +186,7 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
   # test_data_df
   if(!is.null(test_data_df)){
     if(!checkmate::test_class(test_data_df, "data.frame")){
-      stop("test_data_df muste be a data.frame.")
+      stop("test_data_df must be a data.frame.")
     }
     if(!dependent_var %in% colnames(test_data_df)){
       stop("dependent_var has to be a column of test_data_df.")
@@ -191,6 +207,57 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
   if (!is.null(colors) & length(colors)!= nrow(tree_info_df)){
     stop("Please insert a vector with a color for each node including terminal nodes ( = number of rows in tree_info_df).")
   }
+
+  # significance_level
+  if(!is.null(significance_level)){
+    if(!is.numeric(significance_level)){
+      stop("significance_level must be numeric")
+    }
+    if(significance_level<0|significance_level>1){
+      stop("significance_level must be between 0 and 1")
+    }
+  }
+
+  # interval
+  if(!is.null(interval_type)){
+    if(interval_type != "two-tailed" & interval_type != "one-tailed"){
+      stop("Please use 'two-tailed' or 'one-tailed' for interval type.")
+    }
+    if(interval_type == "one-tailed" & is.null(direction)){
+      stop("Please use 'left-tailed' or 'right-tailed' for direction.")
+    }
+    if(interval_type == "one-tailed"){
+      if(is.na(direction)){
+        stop("Please use 'left-tailed' or 'right-tailed' for direction.")
+      }
+      if(direction != "left-tailed" & direction != "right-tailed"){
+        stop("Please use 'left-tailed' or 'right-tailed' for direction.")
+      }
+    }
+  }
+
+  # cpd plot width
+  if(!is.null(cpd_plot_width) & !is.numeric(cpd_plot_width)){
+    stop("cpd_plot_width must be numeric")
+  }
+  if(!is.null(show_prediction_interval) & !is.logical(show_prediction_interval)){
+    stop("show_prediction_interval must be logical")
+  }
+  if(!is.null(show_prediction_nodes) & !is.logical(show_prediction_nodes)){
+    stop("show_prediction_nodes must be logical")
+  }
+  if(!is.null(show_point_prediction) & !is.logical(show_point_prediction)){
+    stop("show_point_prediction must be logical")
+  }
+  if(!is.null(show_sample_size) & !is.logical(show_sample_size)){
+    stop("show_sample_size must be logical")
+  }
+  if(!is.null(threshold) & !is.numeric(threshold)){
+    stop("threshold must be numeric")
+  }
+
+
+
 
   ## Plot tree ----
 

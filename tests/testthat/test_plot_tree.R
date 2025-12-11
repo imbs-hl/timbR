@@ -284,13 +284,161 @@ test_that("Test input", {
 })
 
 
+test_that("Missing mandatory arguments cause errors", {
+  expect_error(plot_tree())                                                                 # no args
+  expect_error(plot_tree(tree_info_df = NULL, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = NULL, rf_list = rf,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = NULL,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = NULL, work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", work_dir = NULL, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = NULL))
+})
+
+test_that("Incorrect types for parameters cause errors", {
+  expect_error(plot_tree(tree_info_df = 123, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = 123, rf_list = rf,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = 123,
+                         dependent_var = "Species", work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = 123, work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", vert_sep = "25",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", hor_sep = "25",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", work_dir = 123,
+                         plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species", work_dir = work_dir,
+                         plot_name = 123))
+})
+
+test_that("Invalid hyperparameter values cause errors", {
+  # tree_number out of range
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         tree_number = 0, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         tree_number = 100, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         tree_number = "one", dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+
+  # logical flags not logical
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         show_sample_size = 1, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         show_prediction_nodes = "TRUE", dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         show_uncertainty = 2, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         show_coverage = NA, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         show_intervalwidth = "no", dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+
+  # vert_sep / hor_sep negative
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         vert_sep = -10, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         hor_sep = -10, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+
+  # colors wrong length
+  expect_error(plot_tree(tree_info_df = tree_info, train_data_df = iris, rf_list = rf,
+                         dependent_var = "Species",
+                         colors = c("red"), work_dir = work_dir, plot_name = "p"))
+})
 
 
+test_that("test_data_df invalid type yields error", {
+  expect_error(plot_tree(tree_info, iris, test_data_df = 1:5, rf, dependent_var = "Species",
+                         work_dir = work_dir, plot_name = "p"))
+})
 
 
+test_that("significance_level must be between 0 and 1", {
+
+  ## significance_level > 1 → Fehler
+  expect_error(
+    plot_tree(
+      tree_info_df = class_info_inbag,
+      train_data_df = class_data,
+      cal_data_df = class_data,
+      rf_list = class_rf_inbag,
+      dependent_var = "Species",
+      significance_level = 1.5,
+      show_cpd = TRUE,
+      work_dir = work_dir,
+      plot_name = "siglev_over1"
+    )
+  )
+
+  ## significance_level < 0 → Fehler
+  expect_error(
+    plot_tree(
+      tree_info_df = class_info_inbag,
+      train_data_df = class_data,
+      cal_data_df = class_data,
+      rf_list = class_rf_inbag,
+      dependent_var = "Species",
+      significance_level = -0.2,
+      show_cpd = TRUE,
+      work_dir = work_dir,
+      plot_name = "siglev_under0"
+    )
+  )
+
+})
 
 
+test_that("direction is validated only for one-tailed interval", {
 
+  # invalid direction
+  expect_error(
+    plot_tree(
+      tree_info_df = class_info_inbag,
+      train_data_df = class_data,
+      cal_data_df = class_data,
+      rf_list = class_rf_inbag,
+      dependent_var = "Species",
+      interval_type = "one-tailed",
+      direction = "nonsense",
+      show_cpd = TRUE,
+      work_dir = work_dir,
+      plot_name = "dir_invalid"
+    )
+  )
 
-
-
+  # direction must be NULL for two-tailed
+  expect_error(
+    plot_tree(
+      tree_info_df = class_info_inbag,
+      train_data_df = class_data,
+      cal_data_df = class_data,
+      rf_list = class_rf_inbag,
+      dependent_var = "Species",
+      interval_type = "two-tailed",
+      direction = "left-tailed",
+      show_cpd = TRUE,
+      work_dir = work_dir,
+      plot_name = "dir_notnull_twotailed"
+    )
+  )
+})
