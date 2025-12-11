@@ -6,19 +6,19 @@
 #' @param rf_list                 Random forest, which is built like the one you get from ranger()
 #' @param tree_number             Number of the decision tree of the rf_list to be displayed
 #' @param dependent_var           Name of the column of the dependent variable in training data
-#' @param threshold               Vector of numerical threshhold(s) for which the probability of reaching this threshold is to be displayed in the plot; in addition, the probability of reaching at least the threshold is returned. Set to NULL if not used.
-#' @param significance_level      Level of uncertainty that should be reached by calibration, should be between 0 and 1.
-#' @param interval_type           Type of interval, choose either two-tailed or one-tailed
-#' @param direction               Direction of one-tailed interval, choose either left-tailed or right-tailed. Set to NULL if not used.
+#' @param threshold               Vector of numerical threshhold(s) for which the probability of reaching this threshold is to be displayed in the plot; in addition, the probability of reaching at least the threshold is returned. Set to NULL if not used.  (cpd_plot_width has to be TRUE)
+#' @param significance_level      Level of uncertainty that should be reached by calibration, should be between 0 and 1.  (cpd_plot_width has to be TRUE)
+#' @param interval_type           Type of interval, choose either two-tailed or one-tailed  (cpd_plot_width has to be TRUE)
+#' @param direction               Direction of one-tailed interval, choose either left-tailed or right-tailed. Set to NULL if not used. (cpd_plot_width has to be TRUE)
 #' @param show_sample_size        Option to display percentage of observations that reach nodes during training, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
 #' @param show_prediction_nodes   Option to display prediction in all nodes, inbag data must be available (TRUE or FALSE, TRUE could be time consuming)
 #' @param show_uncertainty        Option to display uncertainty quantification in terminal nodes (for now only available for regression)
 #' @param show_coverage           Option to display marginal coverage (only in combination with show_uncertainty = TRUE)
 #' @param show_intervalwidth      Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)
 #' @param show_cpd                Option to display cummulative prediction distribution (cpd) for each terminal node below each terminal node
-#' @param cpd_plot_width          Width of cpd plot
-#' @param show_point_prediction   Add dashed line in cpd plot for point prediction of terminal nodes
-#' @param show_prediction_interval Add prediction interval in cpd plot
+#' @param cpd_plot_width          Width of cpd plot (cpd_plot_width has to be TRUE)
+#' @param show_point_prediction   Add dashed line in cpd plot for point prediction of terminal nodes (cpd_plot_width has to be TRUE)
+#' @param show_prediction_interval Add prediction interval in cpd plot (cpd_plot_width has to be TRUE)
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
 #' @param work_dir                Path where plot should be saved
