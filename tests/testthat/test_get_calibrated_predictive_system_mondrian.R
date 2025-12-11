@@ -22,10 +22,6 @@ y_test_pred <- predict(rep_tree, test_data)$predictions
 y_cal_pred <- predict(rep_tree, cal_data)$predictions
 y_cal <- cal_data$carat
 
-# Calibrated predictions
-calibrated_predictions <- get_calibrated_predictive_system_mondrian(y_cal_pred = y_cal_pred, y_cal = y_cal, y_test_pred = y_test_pred[1:10],
-                                                           significance_level = 0.05, interval_type = "two-tailed",
-                                                           tree = rep_tree, cal_data=cal_data, test_data = test_data, dependent_varname="carat")
 
 
 
@@ -54,6 +50,12 @@ test_that("Test incorrect inputs", {
 
 ## Test output
 test_that("Test output", {
+  # Calibrated predictions
+  calibrated_predictions <- get_calibrated_predictive_system_mondrian(y_cal_pred = y_cal_pred, y_cal = y_cal, y_test_pred = y_test_pred[1:10],
+                                                                      significance_level = 0.05, interval_type = "two-tailed",
+                                                                      tree = rep_tree, cal_data=cal_data, test_data = test_data, dependent_varname="carat")
+
   expect_equal(class(calibrated_predictions), "data.frame")
   expect_equal(ncol(calibrated_predictions), 3)
 })
+

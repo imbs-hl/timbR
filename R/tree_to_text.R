@@ -22,6 +22,8 @@
 #' @param show_prediction_interval Add prediction interval in cpd plot
 #' @param vert_sep                Vertical spacing of nodes in mm (parameter from Latex package "forest")
 #' @param hor_sep                 Horizontal spacing of nodes in mm (parameter from Latex package "forest")
+#' @param colors                  Vector with color names with one entry for each node, so for each row in tree_info_df
+#' @param work_dir                Path where plot should be saved
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @returns                       Character pasted Latex code for the plot with the Latex package "forest"
 tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, cal_data_df, rf_list, tree_number, dependent_var,

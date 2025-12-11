@@ -33,6 +33,7 @@
 #' @import knitr
 #' @import tinytex
 #' @import data.table
+#' @import ggplot2
 #'
 #' @export plot_tree
 #'
@@ -42,6 +43,7 @@
 #' require(tinytex)
 #' require(ranger)
 #' require(timbR)
+#' require(ggplot2)
 #'
 #' ## Specify the path to the folder where the plot should be saved
 #' work_dir <- getwd()
@@ -62,7 +64,7 @@
 plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data_df = NULL, rf_list, tree_number = 1, dependent_var,
                       threshold = NULL, significance_level = NULL, interval_type = NULL, direction = NULL,
                       show_sample_size = FALSE, show_prediction_nodes = FALSE, show_uncertainty = FALSE, show_coverage = FALSE, show_intervalwidth = FALSE,
-                      show_cpd = FALSE, cpd_plot_width=22, show_point_prediction = FALSE, show_prediction_interval = FALSE,
+                      show_cpd = FALSE, cpd_plot_width=NULL, show_point_prediction = FALSE, show_prediction_interval = FALSE,
                       vert_sep = 25, hor_sep = 25,
                       work_dir, plot_name, colors = NULL){
 
@@ -86,10 +88,9 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
     stop("cal_data_df and cpd_plot_width must not be NULL if show_cpd = TRUE")
   }
 
-  if(!show_cpd & any(!is.null(cal_data_df) |
+  if(show_cpd & any(!is.null(cal_data_df) |
                      !is.null(cpd_plot_width) |
                      !is.null(threshold) |
-                     !is.null(significance_level) |
                      !is.null(interval_type) |
                      !is.null(direction) |
                      !is.null(show_prediction_nodes) |
