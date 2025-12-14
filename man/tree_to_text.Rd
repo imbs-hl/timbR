@@ -9,17 +9,27 @@ tree_to_text(
   tree_info_df,
   train_data_df,
   test_data_df,
+  cal_data_df,
   rf_list,
   tree_number,
   dependent_var,
+  threshold,
+  significance_level,
+  interval_type,
+  direction,
   show_sample_size,
   show_prediction_nodes,
   show_uncertainty,
   show_coverage,
   show_intervalwidth,
+  show_cpd,
+  cpd_plot_width,
+  show_point_prediction,
+  show_prediction_interval,
   vert_sep,
   hor_sep,
-  colors
+  colors,
+  work_dir
 )
 }
 \arguments{
@@ -31,11 +41,21 @@ tree_to_text(
 
 \item{test_data_df}{Data frame of the test data (only needed, if show_coverage = TRUE)}
 
+\item{cal_data_df}{Data frame of the calibration data (only needed, if show_cpd = TRUE)}
+
 \item{rf_list}{Random forest, which is built like the one you get from ranger()}
 
 \item{tree_number}{Number of the decision tree of the rf_list to be displayed}
 
 \item{dependent_var}{Name of the column of the dependent variable in training data}
+
+\item{threshold}{Vector of numerical threshhold(s) for which the probability of reaching this threshold is to be displayed in the plot; in addition, the probability of reaching at least the threshold is returned. Set to NULL if not used.}
+
+\item{significance_level}{Level of uncertainty that should be reached by calibration, should be between 0 and 1.}
+
+\item{interval_type}{Type of interval, choose either two-tailed or one-tailed}
+
+\item{direction}{Direction of one-tailed interval, choose either left-tailed or right-tailed. Set to NULL if not used.}
 
 \item{show_sample_size}{Option to display percentage of observations that reach nodes during training (TRUE or FALSE)}
 
@@ -47,9 +67,21 @@ tree_to_text(
 
 \item{show_intervalwidth}{Option to display interval width uncertainty quantification in terminal nodes (only in combination with show_uncertainty = TRUE)}
 
+\item{show_cpd}{Option to display cummulative prediction distribution (cpd) for each terminal node below each terminal node}
+
+\item{cpd_plot_width}{Width of cpd plot}
+
+\item{show_point_prediction}{Add dashed line in cpd plot for point prediction of terminal nodes}
+
+\item{show_prediction_interval}{Add prediction interval in cpd plot}
+
 \item{vert_sep}{Vertical spacing of nodes in mm (parameter from Latex package "forest")}
 
 \item{hor_sep}{Horizontal spacing of nodes in mm (parameter from Latex package "forest")}
+
+\item{colors}{Vector with color names with one entry for each node, so for each row in tree_info_df}
+
+\item{work_dir}{Path where plot should be saved}
 }
 \value{
 Character pasted Latex code for the plot with the Latex package "forest"
