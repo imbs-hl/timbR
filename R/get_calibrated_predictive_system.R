@@ -12,7 +12,7 @@
 #'
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @return
-#'   \item{data frame with point prediction and lower and upper bound of prediction interval.}
+#'   data frame with point prediction and lower and upper bound of prediction interval.
 #' @import ranger
 #' @import dplyr
 #' @import checkmate

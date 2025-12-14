@@ -27,7 +27,7 @@ get_calibrated_predictive_system(
 \item{direction}{Direction of one-tailed interval, choose either left-tailed or right-tailed}
 }
 \value{
-\item{data frame with point prediction and lower and upper bound of prediction interval.}
+data frame with point prediction and lower and upper bound of prediction interval.
 }
 \description{
 \code{get_calibrated_predictive_system} calibrates regression predictions using conformal predictive systems

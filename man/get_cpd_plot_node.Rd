@@ -39,7 +39,7 @@ get_cpd_plot_node(
 \item{show_prediction_interval}{Set to TRUE, if you want to display prediction interval for this terminal node in plot}
 }
 \value{
-\item{list, first element is ggplot object, second a data.frame with probabilities beeing above inserted treshold}
+list, first element is ggplot object, second a data.frame with probabilities beeing above inserted treshold
 }
 \description{
 \code{get_cpd_plot_node} builds ggplot object for CPS of a terminal node of a tree

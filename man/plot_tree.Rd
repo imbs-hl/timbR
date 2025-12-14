@@ -109,7 +109,7 @@ rf_iris <- ranger(Species ~ ., data = iris, write.forest=TRUE, num.trees = 10, m
 treeinfo_iris <- treeInfo(rf_iris)
 
 ## Plot the first tree
-timbR::plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, test_data_df = iris, rf_list = rf_iris,
+plot_tree(tree_info_df = treeinfo_iris, train_data_df = iris, test_data_df = iris, rf_list = rf_iris,
                  dependent_var = "Species", work_dir = work_dir, plot_name = "example_plot")
 }
 \author{

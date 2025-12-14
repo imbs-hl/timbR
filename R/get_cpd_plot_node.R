@@ -15,7 +15,7 @@
 #'
 #' @author Lea Louisa Kronziel, M.Sc.
 #' @return
-#'   \item{list, first element is ggplot object, second a data.frame with probabilities beeing above inserted treshold}
+#'   list, first element is ggplot object, second a data.frame with probabilities beeing above inserted treshold
 #' @import ranger
 #' @import dplyr
 #' @import checkmate

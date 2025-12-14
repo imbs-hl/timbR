@@ -42,7 +42,7 @@ get_calibrated_predictive_system_mondrian(
 \item{show_node_id}{If true the ID of the terminal nodes of each prediction is returned as column in returned data frame.}
 }
 \value{
-\item{data frame with point prediction and lower and upper bound of prediction interval.}
+data frame with point prediction and lower and upper bound of prediction interval.
 }
 \description{
 \code{get_calibrated_predictive_system_mondrian} calibrates regression predictions using Mondrian conformal predictive systems
