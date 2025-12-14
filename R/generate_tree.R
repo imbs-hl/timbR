@@ -218,6 +218,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       decision <- data.frame(var = var, decision = imp) %>%
         filter(decision == "Confirmed")
 
+      # Stop if no important variables are found
+      if(nrow(decision)==0){
+        stop("The Boruta variable selection algorithm found no important variables. No ART is build.")
+      }
+
       # Match split points with importance values
       split_points <- split_points[split_points$split_var %in% decision$var,]
     }
