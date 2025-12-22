@@ -177,11 +177,15 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
     }), stringsAsFactors = FALSE)
   }
 
-
   # Prepare set up to build most similar stump
 
   # Forest object from ranger
   forest <- rf$forest
+
+  # Building an ART not possible if no splits occurs in RF
+  if(length(cbind(unlist(forest$split.varIDs))) == 0){
+    stop("No splits in RF thus no ART is build")
+  }
 
   # Get all used split points in RF
   # In the ranger object, the list of splits also contains all terminal nodes (leafs), which have the prediction saved as the split value.
@@ -189,6 +193,8 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   split_points <- data.frame(split_varID = cbind(unlist(forest$split.varIDs)),
                              split_value = round(cbind(unlist(forest$split.values)), 100)) %>%
     mutate(split_var = forest$independent.variable.names[split_varID+1])
+
+
 
   # Get information about child nodes to exclude leafs
   child_nodes <- bind_rows(lapply(forest$child.nodeIDs, function(x){return(data.frame(left=x[[1]], right=x[[2]]))}))
@@ -218,6 +224,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       decision <- data.frame(var = var, decision = imp) %>%
         filter(decision == "Confirmed")
 
+      # Stop if no important variables are found
+      if(nrow(decision)==0){
+        stop("The Boruta variable selection algorithm found no important variables. No ART is build.")
+      }
+
       # Match split points with importance values
       split_points <- split_points[split_points$split_var %in% decision$var,]
     }
@@ -225,11 +236,20 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       # Recode variable importance values
       imp <- data.frame(imp = rf$variable.importance, var = names(rf$variable.importance))
 
+      # Warning if all variables have importance of zero
+      if(all(imp$imp==0)){
+        warning("All variables have RF variable importance of zero.")
+      }
+
       # Select fraction of variables
       imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:imp.num.var],]
 
       # Match split points with importance values
       split_points <- split_points[split_points$split_var %in% imp$var,]
+
+      # Stop if no split points are left
+      stop("No split points left after filtering for important variables. Please take a look at your RF and it's importance values.")
+
     }
   }
 
@@ -428,6 +448,14 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   # Save which observations of train data are used in every node
   node_data_art <- list(train_data, node_data_list[[ids_minimal_dist]]$left, node_data_list[[ids_minimal_dist]]$right)
 
+  # Remove used split point and check, if splits are left to continue splitting
+  split_points_i <- split_points[-ids_minimal_dist,]
+  number_splits <- nrow(split_points_i)
+  if(number_splits==0){
+    return(ranger_tree)
+  }
+
+
   # Check if node is pure, in this case stop splitting in that node
   splits_per_node_list <- list(split_points)
   for(i in 2:3){
@@ -435,11 +463,10 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
       splits_per_node_list[[i]] <- NA
     }else{
       # If node of stump is not pure, list all possible split points that could be added to that leaf
-      # List with possible splits per node and remove split used in root in daughter nodes
-      split_points_i <- split_points[-ids_minimal_dist,]
+      # Remove split used in root in daughter nodes
       # Check for other potential splits if data is passed to child nodes, if that split would be used
       # Check if number of observations on nodes is not smaller than min.bucket otherwise remove that potential split
-      number_splits <- nrow(split_points_i)
+
       remove_split <- rep(FALSE, number_splits)
       node_data <- node_data_art[[i]]
       for(splits in 1:number_splits){

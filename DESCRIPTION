@@ -1,7 +1,7 @@
 Package: timbR
 Type: Package
 Title: Tree interpretation methods based on ranger 
-Version: 3.2
+Version: 3.3
 Author: Lea Louisa Kronziel, M.Sc., Bjoern-Hergen Laabs, M.Sc.
 Maintainer: Lea Louisa Kronziel, M.Sc. <l.kronziel@uni-luebeck.de>, Bjoern-Hergen Laabs, M.Sc. <b.laabs@uni-luebeck.de>
 Description: A collection of different methods to identify representative trees in random forests trained by ranger. 
@@ -11,4 +11,4 @@ LazyData: true
 Imports: ranger, checkmate, dplyr, data.table, knitr, tinytex, Boruta
 Depends: R (>= 3.1)
 Suggests: testthat
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

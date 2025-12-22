@@ -14,7 +14,7 @@ get_predictive_distribution(y_cal_pred, y_cal, y_test_pred)
 \item{y_test_pred}{Predictions of test data set that should be calibrated.}
 }
 \value{
-\item{list with one cpd for each test observation}
+list with one cpd for each test observation
 }
 \description{
 \code{get_predictive_distribution} calculates cummulative predictive distribution using conformel predictive systems

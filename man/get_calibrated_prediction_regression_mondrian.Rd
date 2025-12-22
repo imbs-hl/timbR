@@ -36,7 +36,7 @@ get_calibrated_prediction_regression_mondrian(
 \item{show_node_id}{If true the ID of the terminal nodes of each prediction is returned as column in returned data frame.}
 }
 \value{
-\item{data frame with point prediction and lower and upper bound of prediction interval.}
+data frame with point prediction and lower and upper bound of prediction interval.
 }
 \description{
 \code{get_calibrated_prediction_regression_mondrian} calibrates regression predictions using conformal prediction

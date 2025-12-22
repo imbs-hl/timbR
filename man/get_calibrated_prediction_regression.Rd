@@ -21,7 +21,8 @@ get_calibrated_prediction_regression(
 \item{significance_level}{Level of uncertainty that should be reached by calibration, should be between 0 and 1.}
 }
 \value{
-\item{data frame with point prediction and lower and upper bound of prediction interval.}
+A data frame with point predictions and lower and upper bounds
+  of the prediction interval.
 }
 \description{
 \code{get_calibrated_prediction_regression} calibrates regression predictions using conformal prediction
