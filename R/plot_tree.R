@@ -92,7 +92,6 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
                      !is.null(cpd_plot_width) |
                      !is.null(threshold) |
                      !is.null(interval_type) |
-                     !is.null(direction) |
                      !is.null(show_prediction_nodes) |
                      !is.null(show_point_prediction) |
                      !is.null(show_prediction_interval) |
