@@ -88,11 +88,10 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
     stop("cal_data_df and cpd_plot_width must not be NULL if show_cpd = TRUE")
   }
 
-  if(show_cpd & any(!is.null(cal_data_df) |
+  if(!show_cpd & any(!is.null(cal_data_df) |
                      !is.null(cpd_plot_width) |
                      !is.null(threshold) |
                      !is.null(interval_type) |
-                     !is.null(direction) |
                      !is.null(show_prediction_nodes) |
                      !is.null(show_point_prediction) |
                      !is.null(show_prediction_interval) |
