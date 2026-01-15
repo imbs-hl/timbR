@@ -92,10 +92,10 @@ plot_tree <- function(tree_info_df, train_data_df, test_data_df = NULL, cal_data
                      !is.null(cpd_plot_width) |
                      !is.null(threshold) |
                      !is.null(interval_type) |
-                     !is.null(show_prediction_nodes) |
-                     !is.null(show_point_prediction) |
-                     !is.null(show_prediction_interval) |
-                     !is.null(show_sample_size))){
+                     show_prediction_nodes |
+                     show_point_prediction |
+                     show_prediction_interval |
+                     show_sample_size)){
     stop("show_cpd = TRUE is needed for displaying a cpd plot")
   }
 
