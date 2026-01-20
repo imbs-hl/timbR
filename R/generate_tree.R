@@ -192,6 +192,11 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   # Forest object from ranger
   forest <- rf$forest
 
+  # Building an ART not possible if no splits occurs in RF
+  if(length(cbind(unlist(forest$split.varIDs))) == 0){
+    stop("No splits in RF thus no ART is build")
+  }
+
   # Get all used split points in RF
   # In the ranger object, the list of splits also contains all terminal nodes (leafs), which have the prediction saved as the split value.
   # The value 0 is entered for both child nodes for leafs so that the leafs can be filtered out of the list of split points.
@@ -292,11 +297,6 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
         filter(!(split_var %in% ids_split)) %>%
         bind_rows(new_split_points)
     }
-  }
-
-  # Check, if any split points are left
-  if(nrow(split_points) == 0){
-    stop("No split points available, because all have been filtered out (e.g. because of too small imp.num.var).")
   }
 
   # Initialize tree as the forest part of a ranger object, rest of ranger object is added later if necessary
@@ -481,7 +481,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
   }
 
   # Return stump if no split points are left
-  if(nrow(split_points==1)){
+  if(nrow(split_points)==1){
     if(rf$treetype=="Survival"){
       # add overall chf and survival
       ranger_tree$chf <- predict(art, train_data)$chf
