@@ -238,18 +238,19 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
       # Warning if all variables have importance of zero
       if(all(imp$imp==0)){
-        warning("All variables have RF variable importance of zero.")
+        warning("All variables have RF variable importance of zero. Building an ART for interpreting the RF might be no good idea.")
       }
 
       # Select fraction of variables
       imp <- imp[sort(imp$imp, decreasing = TRUE, index.return = TRUE)$ix[1:imp.num.var],]
 
+      if(all(!(split_points$split_var %in% imp$var))){
+        # Stop if no split points are left
+        stop("No split points left after filtering for important variables. Please take a look at your imp.num.var, your RF and the RF importance values.")
+      }
+
       # Match split points with importance values
       split_points <- split_points[split_points$split_var %in% imp$var,]
-
-      # Stop if no split points are left
-      stop("No split points left after filtering for important variables. Please take a look at your RF and it's importance values.")
-
     }
   }
 
