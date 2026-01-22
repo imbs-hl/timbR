@@ -675,8 +675,8 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
 
 
             # Split values of terminal nodes are 0 for survival
-            tree$split.values[[tree$num.trees]][2] <- 0
-            tree$split.values[[tree$num.trees]][3] <- 0
+            tree$split.values[[tree$num.trees]][max_node+1] <- 0
+            tree$split.values[[tree$num.trees]][max_node+2] <- 0
           }
           # Add possible tree to list
           possible_trees <- c(possible_trees, list(tree))
