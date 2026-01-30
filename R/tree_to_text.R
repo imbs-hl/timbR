@@ -90,7 +90,7 @@ tree_to_text <- function(node_id, tree_info_df, train_data_df, test_data_df, cal
       probs_text <- ""
       if(!is.null(threshold)){
         probs <- cps_leaf[[2]]
-        probs_text <- paste0("\\\\P(y$\\leq$", probs$value, ")=",round(probs$prob*100,2),"\\%", collapse = ", ")
+        probs_text <- paste0("\\\\P(y$>$", probs$value, ")=",round(probs$prob*100,2),"\\%", collapse = ", ")
       }
 
       leaf <- paste0(leaf,
