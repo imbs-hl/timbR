@@ -49,14 +49,14 @@ get_distance_score <- function(rf, dist_val_rf, dist_val_tree, metric, test_data
     # Extract number of features
     num_features <- rf$num.independent.variables
     # Calculate standardized pair-wise distances
-    distances <- as.matrix(dist(t(distance_values), method = "euclidian"))^2 / num_features
+    distances <- as.matrix(dist(t(distance_values), method = "euclidean"))^2 / num_features
     return(mean(distances[,1]))
   }
   if (metric == "weighted splitting variables"){
     # Extract number of features
     num_features <- rf$num.independent.variables
     # Calculate standardized pair-wise distances
-    distances <- as.matrix(dist(t(distance_values), method = "euclidian"))^2
+    distances <- as.matrix(dist(t(distance_values), method = "euclidean"))^2
     return(mean(distances[,1]))
   }
   if (metric == "prediction"){
@@ -66,8 +66,8 @@ get_distance_score <- function(rf, dist_val_rf, dist_val_tree, metric, test_data
       # Calculate standardized pair-wise distances
       distances <- as.matrix(dist(t(distance_values), method = "manhattan")) / nrow(test_data)
     } else {
-      # Calculate standardized pair-wise distances: quadratic euclidian distance
-      distances <- as.matrix(dist(t(distance_values), method = "euclidian"))^2 / nrow(test_data)
+      # Calculate standardized pair-wise distances: quadratic euclidean distance
+      distances <- as.matrix(dist(t(distance_values), method = "euclidean"))^2 / nrow(test_data)
     }
     return(mean(distances[,1]))
   }
