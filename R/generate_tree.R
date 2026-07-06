@@ -217,7 +217,7 @@ generate_tree <- function(rf, metric = "weighted splitting variables", train_dat
         unlist()
 
       # Test for importance with Boruta
-      imp = Boruta(x = x, y = y, ...)$finalDecision
+      imp = Boruta(x = x, y = y,  getImp = Boruta::getImpRfZ, ...)$finalDecision
 
       # Filter the important variables
       var <- names(imp)
