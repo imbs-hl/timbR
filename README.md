@@ -29,6 +29,6 @@ If you find any bugs, or if you experience any crashes, please report to us.
 Please cite our paper if you use timbR.
 
 ### References
-* Laabs, B.-H., Westenberger, A., & König, I. R. (2024). Identification of representative trees in random forests based on a new tree-based distance measure. Advances in Data Analysis and Classification, 18:363–380. 
-* Bannerjee, M., Ding, Y., Noone, A.-M. (2012) Identifying representative trees from ensembles. Stat in Med 31:1601-16.
 * Laabs, B.-H., Kronziel, L. L., König, I. R., & Szymczak, S. (2024). Construction of artificial most representative trees by minimizing tree-based distance measures. In L. Longo, S. Lapuschkin, & C. Seifert (Eds.), Explainable Artificial Intelligence:290–310.
+* Laabs, B.-H., Westenberger, A., & König, I. R. (2024). Identification of representative trees in random forests based on a new tree-based distance measure. Advances in Data Analysis and Classification, 18:363–380. 
+* Banerjee, M., Ding, Y., Noone, A.-M. (2012) Identifying representative trees from ensembles. Stat in Med 31:1601-16.
